@@ -1,0 +1,338 @@
+---
+// src/components/Navbar.astro
+const links = [
+  { label: "Магазин", href: "/shop" }, /*[cite: 2] */
+  { label: "Вкусове", href: "/flavors" }, /*[cite: 2] */
+  { label: "Мъфини по поръчка", href: "/custom-muffins" }, /*[cite: 2] */
+  { label: "За нас", href: "/about" }, /*[cite: 2] */
+  { label: "Събития", href: "/events" }, /*[cite: 2] */
+  { label: "Контакти", href: "/contact" }, /*[cite: 2] */
+];
+---
+
+<div class="announcement">
+  <p>МЪФИНИ. ПО ВСЯКО ВРЕМЕ. НАВСЯКЪДЕ. ♥</p>
+</div>
+
+<header class="nav">
+  <div class="wrap nav__inner">
+    <a href="/" class="logo">
+      <span class="logo__meta"></span>
+      <span class="logo__script">muffin</span>
+      <span class="logo__meta"></span>
+      <span class="logo__word">land</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Основна навигация">
+      {links.map((link) => (
+        <a href={link.href}>{link.label}</a>
+      ))}
+    </nav>
+
+    <div class="nav__icons">
+      <button aria-label="Търсене" class="icon-btn">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button aria-label="Акаунт" class="icon-btn account-btn">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c1.6-3.6 4.8-5.5 8-5.5s6.4 1.9 8 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <a href="/cart" class="icon-btn cart" aria-label="Количка">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 4h2l2.2 12.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="21" r="1.3" fill="currentColor"/><circle cx="17" cy="21" r="1.3" fill="currentColor"/></svg>
+        <span class="cart__count">0</span>
+      </a>
+    </div>
+
+    <button
+      class="nav__burger"
+      aria-label="Отваряне на менюто"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      id="nav-burger"
+    >
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <nav class="mobile-menu__links" aria-label="Мобилна навигация">
+      {links.map((link) => (
+        <a href={link.href}>{link.label}</a>
+      ))}
+    </nav>
+    <div class="mobile-menu__actions">
+      <a href="/account" class="mobile-menu__action">Акаунт</a>
+      <a href="/cart" class="mobile-menu__action">Количка</a>
+    </div>
+  </div>
+</header>
+
+<div class="nav__backdrop" id="nav-backdrop" hidden></div>
+
+<script>
+  const burger = document.getElementById("nav-burger");
+  const menu = document.getElementById("mobile-menu");
+  const backdrop = document.getElementById("nav-backdrop");
+
+  function closeMenu() {
+    if (!burger || !menu || !backdrop) return;
+    burger.setAttribute("aria-expanded", "false");
+    burger.classList.remove("is-open");
+    menu.hidden = true;
+    backdrop.hidden = true;
+    document.body.classList.remove("menu-open");
+  }
+
+  function openMenu() {
+    if (!burger || !menu || !backdrop) return;
+    burger.setAttribute("aria-expanded", "true");
+    burger.classList.add("is-open");
+    menu.hidden = false;
+    backdrop.hidden = false;
+    document.body.classList.add("menu-open");
+  }
+
+  burger?.addEventListener("click", () => {
+    const isOpen = burger.getAttribute("aria-expanded") === "true";
+    isOpen ? closeMenu() : openMenu();
+  });
+
+  backdrop?.addEventListener("click", closeMenu);
+
+  menu?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  // Close the mobile menu automatically if the viewport grows back to desktop size.
+  const desktopQuery = window.matchMedia("(min-width: 901px)");
+  desktopQuery.addEventListener("change", (e) => {
+    if (e.matches) closeMenu();
+  });
+</script>
+
+<style>
+  .announcement {
+    background: var(--color-dark);
+    color: #f4ece7;
+  }
+  .announcement p {
+    margin: 0;
+    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    padding: 9px 16px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 380px) {
+    .announcement p {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+    }
+  }
+
+  .nav {
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    gap: 24px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .logo__meta {
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--color-text-soft);
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+  .logo__script {
+    font-family: var(--font-script);
+    font-size: 2.1rem;
+    color: var(--color-pink);
+    line-height: 1;
+  }
+  .logo__word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.12em;
+    color: var(--color-dark);
+    display: block;
+    width: 100%;
+    margin-left: -1px;
+  }
+
+  .nav__links {
+    display: flex;
+    gap: 30px;
+    font-size: 0.86rem;
+    font-weight: 500;
+  }
+  .nav__links a {
+    transition: color 0.15s ease;
+  }
+  .nav__links a:hover {
+    color: var(--color-pink);
+  }
+
+  .nav__icons {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-dark);
+    display: flex;
+    position: relative;
+    padding: 4px;
+  }
+  .cart__count {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    background: var(--color-pink);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav__burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .nav__burger span {
+    width: 22px;
+    height: 2px;
+    background: var(--color-dark);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .nav__burger.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .nav__burger.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+  .nav__burger.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* MOBILE MENU PANEL */
+  .mobile-menu {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px var(--wrap-padding, 20px) 28px;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .mobile-menu[hidden] {
+    display: none;
+  }
+  .mobile-menu__links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mobile-menu__links a {
+    padding: 12px 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .mobile-menu__actions {
+    display: flex;
+    gap: 12px;
+  }
+  .mobile-menu__action {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .nav__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 16, 14, 0.35);
+    z-index: 39;
+  }
+
+  :global(body.menu-open) {
+    overflow: hidden;
+  }
+
+  @media (max-width: 900px) {
+    .nav__inner {
+      gap: 12px;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .nav__links {
+      display: none;
+    }
+    .nav__burger {
+      display: flex;
+    }
+    .mobile-menu:not([hidden]) {
+      display: flex;
+    }
+    .nav__icons {
+      gap: 8px;
+    }
+    .account-btn {
+      display: none;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .logo__script {
+      font-size: 1.7rem;
+    }
+    .logo__word {
+      font-size: 0.85rem;
+    }
+    .nav__icons {
+      gap: 4px;
+    }
+  }
+</style>

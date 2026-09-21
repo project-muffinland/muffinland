@@ -1,0 +1,451 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Static placeholder data — replace with your own content source.
+const muffins = [
+  { _id: "1", name: "Боровинково блаженство", slug: "blueberry-bliss", imageUrl: "https://picsum.photos/seed/muffin1/500/500" },
+  { _id: "2", name: "Двоен шоколад", slug: "double-chocolate", imageUrl: "https://picsum.photos/seed/muffin2/500/500" },
+  { _id: "3", name: "Солен карамел с хрупкава поръска", slug: "salted-caramel-crumble", imageUrl: "https://picsum.photos/seed/muffin3/500/500" },
+  { _id: "4", name: "Банан и орех", slug: "banana-walnut", imageUrl: "https://picsum.photos/seed/muffin4/500/500" },
+  { _id: "5", name: "Лимон и маково семе", slug: "lemon-poppyseed", imageUrl: "https://picsum.photos/seed/muffin5/500/500" },
+  { _id: "6", name: "Канелен щройзел", slug: "cinnamon-streusel", imageUrl: "https://picsum.photos/seed/muffin6/500/500" },
+];
+
+const heroImageUrl = "https://picsum.photos/seed/muffinhero/620/700";
+const heroImageAlt = "Прясно изпечен мъфин в рустикална хартиена опаковка";
+
+const icons: Record<string, string> = {
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7.6 17.4 4 14.2 4 10.4 4 7.9 6 6 8.4 6c1.4 0 2.7.7 3.6 1.8C12.9 6.7 14.2 6 15.6 6 18 6 20 7.9 20 10.4c0 3.8-3.6 7-7.2 9.8-.2.2-.5.3-.8.3Z"/></svg>`,
+  leaf: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c7-1 12-6 13-13-8 .5-13 4.5-13 13Z"/><path d="M5 19c1-4 3.5-7 8-9.5"/></svg>`,
+  whisk: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v5"/><path d="M8 7c-1.8 1.8-1.8 8 4 12"/><path d="M16 7c1.8 1.8 1.8 8-4 12"/><path d="M12 7c-.8 2.5-.8 7.5 0 12"/></svg>`,
+  gift: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M4 13h16"/><path d="M12 9v11"/><path d="M12 9C10 9 8 7.8 8 6c0-1.1.9-2 2-2 1.7 0 2 2 2 5Z"/><path d="M12 9c2 0 4-1.2 4-3 0-1.1-.9-2-2-2-1.7 0-2 2-2 5Z"/></svg>`,
+  truck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="12" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/></svg>`,
+};
+
+const features = [
+  { icon: "heart", title: "Направено с любов", copy: "Всеки мъфин е изпечен с грижа." },
+  { icon: "leaf", title: "Качествени съставки", copy: "Използваме прости, първокласни съставки." },
+  { icon: "whisk", title: "Ръчна изработка", copy: "Малки партиди. Голям вкус." },
+  { icon: "gift", title: "Идеално за всеки повод", copy: "Рождени дни, празненства или просто така." },
+  { icon: "truck", title: "Доставка в цялата страна", copy: "Вкусотия, доставена до вас." },
+];
+
+const testimonials = [
+  { quote: "Най-накрая, мъфин, който подхожда на всяка сутрин.", name: "Джесика Р." }, /* */
+  { quote: "Купих една кутия. Случайно поръчах още шест.", name: "Майк Т." }, /* */
+  { quote: "Тези развалиха всяка друга пекарна за мен.", name: "Алекс П." }, /* */
+];
+---
+
+<BaseLayout>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <span class="eyebrow">Направено с любов ♥</span>
+        <h1>
+          Сутрините са<br />
+          <em>по-добри</em><br />
+          с мъфини.
+        </h1>
+        <p>
+          Пухкави, ръчно изработени мъфини, изпечени в малки партиди.
+          Създадени за сладките моменти в живота.
+        </p>
+        <div class="hero__actions">
+          <a href="/shop" class="btn btn-solid">Пазарувай сега</a>
+          <a href="/flavors" class="btn btn-outline">Разгледай вкусовете</a>
+        </div>
+      </div>
+      <div class="hero__media">
+        <img src={heroImageUrl} alt={heroImageAlt} />
+        <span class="hero__badge">Ръчно изработено<br />специално за теб</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="wrap features__grid">
+      {features.map((f) => (
+        <div class="feature">
+          <span class="feature__icon" aria-hidden="true" set:html={icons[f.icon]} />
+          <h4>{f.title}</h4>
+          <p>{f.copy}</p>
+        </div>
+          ))}
+    </div>
+  </section>
+
+  <!-- FLAVORS -->
+  <section class="flavors">
+    <div class="wrap">
+      <div class="section-heading">
+        <span class="eyebrow">Пазарувай от нашите</span>
+        <h2>Най-обичани вкусове</h2>
+      </div>
+
+      <div class="flavors__grid">
+        {muffins.map((m) => (
+          <article class="flavor-card">
+            <a href={`/muffins/${m.slug}`} class="flavor-card__media">
+              <img src={m.imageUrl} alt={m.name} />
+            </a>
+            <h4>{m.name}</h4>
+            <a href={`/muffins/${m.slug}`} class="btn btn-solid btn-small">Пазарувай сега</a>
+          </article>
+        ))}
+      </div>
+
+      <div class="flavors__cta">
+        <a href="/flavors" class="btn btn-outline">Виж всички вкусове</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="story">
+    <div class="wrap story__grid">
+      <div class="story__media">
+        <img src="https://picsum.photos/seed/muffinbox/600/500" alt="Подаръчна кутия с различни мъфини, вързана с панделка" />
+      </div>
+      <div class="story__copy">
+        <span class="eyebrow">Нашата история</span>
+        <h2>Повече от мъфин,<br />това е <em>уют</em>.</h2>
+        <p>
+          Muffin Social беше създадена, за да внесе малко топлина в ежедневните моменти.
+          Независимо дали е почерпка за вас самите или сладък начин да отпразнувате нечий празник,
+          ние сме тук, за да направим всяка сутрин малко по-добра.
+        </p>
+        <a href="/about" class="btn btn-solid">Нашата история</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="wrap">
+      <div class="section-heading">
+        <span class="eyebrow">Хората говорят</span>
+      </div>
+      <div class="testimonials__grid">
+        {testimonials.map((t) => (
+          <blockquote class="testimonial">
+            <div class="testimonial__stars">★★★★★</div>
+            <p>&ldquo;{t.quote}&rdquo;</p>
+            <cite>— {t.name}</cite>
+          </blockquote>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTAGRAM -->
+  <section class="community">
+    <div class="wrap">
+      <div class="section-heading">
+        <span class="eyebrow">Присъединете се към общността на Muffin Social</span>
+        <p class="community__handle">@muffinsocial</p>
+      </div>
+      <div class="community__grid">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div class="community__item">
+            <img src={`https://picsum.photos/seed/muffingram${i}/260/260`} alt="Снимка на общността на Muffin Social" />
+          </div>
+        ))}
+      </div>
+      <div class="flavors__cta">
+        <a href="https://instagram.com" class="btn btn-outline">Последвайте ни в Instagram</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* HERO */
+  .hero {
+    padding-top: 64px;
+  }
+  .hero__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 48px;
+  }
+  .hero__copy h1 {
+    font-size: 3.4rem;
+    line-height: 1.08;
+    margin: 6px 0 22px;
+  }
+  .hero__copy h1 em {
+    font-style: italic;
+    color: var(--color-pink);
+  }
+  .hero__copy p {
+    color: var(--color-text-soft);
+    max-width: 40ch;
+    margin-bottom: 30px;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .hero__media {
+    position: relative;
+  }
+  .hero__media img {
+    border-radius: 16px;
+    width: 100%;
+    object-fit: cover;
+  }
+  .hero__badge {
+    position: absolute;
+    bottom: -18px;
+    right: -18px;
+    background: var(--color-pink);
+    color: #fff;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    box-shadow: 0 8px 24px rgba(232, 115, 125, 0.35);
+  }
+
+  /* FEATURES */
+  .features {
+    padding: 56px 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .features__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+    text-align: center;
+  }
+  .feature__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--color-bg-alt);
+  color: var(--color-dark);
+}
+.feature__icon svg {
+  width: 18px;
+  height: 18px;
+}
+  .feature h4 {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .feature p {
+    font-size: 0.82rem;
+    color: var(--color-text-soft);
+    margin: 0;
+  }
+
+  /* SECTION HEADING */
+  .section-heading {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  .section-heading h2 {
+    font-size: 2.1rem;
+  }
+  .community__handle {
+    color: var(--color-text-soft);
+    margin-top: 4px;
+  }
+
+  /* FLAVORS */
+  .flavors__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 18px;
+  }
+  .flavor-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+  }
+  .flavor-card__media {
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 12px;
+  }
+  .flavor-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .flavor-card h4 {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .btn-small {
+    padding: 8px 18px;
+    font-size: 0.7rem;
+  }
+  .flavors__cta {
+    text-align: center;
+    margin-top: 36px;
+  }
+
+  /* STORY */
+  .story {
+    background: var(--color-bg-alt);
+  }
+  .story__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .story__media img {
+    border-radius: 16px;
+    width: 100%;
+  }
+  .story__copy h2 {
+    font-size: 2rem;
+    margin: 6px 0 20px;
+  }
+  .story__copy h2 em {
+    font-style: italic;
+    color: var(--color-pink);
+  }
+  .story__copy p {
+    color: var(--color-text-soft);
+    max-width: 46ch;
+    margin-bottom: 26px;
+  }
+
+  /* TESTIMONIALS */
+  .testimonials__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .testimonial {
+    margin: 0;
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .testimonial__stars {
+    color: var(--color-gold);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .testimonial p {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--color-dark);
+    margin-bottom: 14px;
+  }
+  .testimonial cite {
+    font-size: 0.8rem;
+    color: var(--color-text-soft);
+    font-style: normal;
+  }
+
+  /* COMMUNITY */
+  .community__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .community__item {
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .community__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      padding-top: 40px;
+    }
+    .hero__grid,
+    .story__grid {
+      grid-template-columns: 1fr;
+    }
+    .hero__media {
+      overflow: visible;
+    }
+    .hero__badge {
+      width: 88px;
+      height: 88px;
+      font-size: 0.68rem;
+      bottom: -14px;
+      right: 8px;
+    }
+    .features__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+    .flavors__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .testimonials__grid {
+      grid-template-columns: 1fr;
+    }
+    .community__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .hero__copy h1 {
+      font-size: 2.4rem;
+    }
+    .hero__actions .btn {
+      flex: 1 1 auto;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero__copy h1 {
+      font-size: 1.9rem;
+    }
+    .hero__badge {
+      width: 76px;
+      height: 76px;
+      font-size: 0.6rem;
+      right: 4px;
+      bottom: -10px;
+    }
+    .section-heading h2 {
+      font-size: 1.6rem;
+    }
+    .features__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .community__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

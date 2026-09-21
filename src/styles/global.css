@@ -1,0 +1,131 @@
+/* ==========================================================================
+   Muffin Social — Global design tokens
+   Palette + type pulled to match the reference "Cake Social" style guide,
+   re-themed around muffins.
+   ========================================================================== */
+
+:root {
+  /* Palette */
+  --color-bg: #fbf3ee;          /* main cream background */
+  --color-bg-alt: #f6e8e2;      /* alternating section cream */
+  --color-dark: #1f3a34;        /* deep pine green (header/footer) */
+  --color-dark-2: #16302b;
+  --color-pink: #e8737d;        /* coral pink accent / buttons */
+  --color-pink-dark: #d95d68;
+  --color-pink-light: #f6d6d2;
+  --color-gold: #c99a4a;        /* small icon accents */
+  --color-text: #2c2925;
+  --color-text-soft: #6b645d;
+  --color-border: #e7d9d1;
+
+  /* Type */
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-script: "Caveat", cursive;
+  --font-sans: "Jost", "Helvetica Neue", Arial, sans-serif;
+
+  --container: 1180px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--color-dark);
+  margin: 0;
+  font-weight: 600;
+}
+
+.wrap {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--color-pink);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 28px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-solid {
+  background: var(--color-pink);
+  color: #fff;
+}
+
+.btn-solid:hover {
+  background: var(--color-pink-dark);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--color-pink);
+  color: var(--color-pink);
+}
+
+.btn-outline:hover {
+  background: var(--color-pink);
+  color: #fff;
+}
+
+section {
+  padding: 88px 0;
+}
+
+@media (max-width: 900px) {
+  section {
+    padding: 56px 0;
+  }
+}

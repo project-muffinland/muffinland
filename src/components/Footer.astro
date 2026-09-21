@@ -1,0 +1,269 @@
+---
+// src/components/Footer.astro
+const year = new Date().getFullYear();
+
+const shopLinks = ["Всички вкусове", "Подаръчни кутии", "Мъфини по поръчка", "Аксесоари"]; /* */
+const infoLinks = ["За нас", "Нашата история", "Събития", "ЧЗВ"]; /* */
+const careLinks = ["Свържете се с нас", "Доставка", "Връщане и възстановяване на средства", "Инструкции за съхранение"]; /* */
+---
+
+<section class="newsletter">
+  <div class="wrap newsletter__inner">
+    <div>
+      <h3>Вземете хубавите неща</h3>
+      <p class="newsletter__perks">
+        <span>🧁 Ексклузивни предложения</span>
+        <span>✦ Нови вкусове</span>
+        <span>♥ Сладки изненади</span>
+        <span>✦ Специални оферти</span>
+      </p>
+    </div>
+    <form class="newsletter__form" onsubmit="event.preventDefault()">
+      <label for="newsletter-email" class="newsletter__label">Научете първи.</label>
+      <div class="newsletter__field">
+        <input id="newsletter-email" type="email" placeholder="Въведете вашия имейл" required />
+        <button type="submit" class="btn btn-solid">Присъединете се към клуба</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__brand">
+      <a href="/" class="logo">
+        <span class="logo__meta">СЪЗД</span>
+        <span class="logo__script">muffin</span>
+        <span class="logo__meta">2026</span>
+        <span class="logo__word">SOCIAL</span>
+      </a>
+      <p>Мъфини. По всяко време. Навсякъде.</p>
+    </div>
+
+    <nav>
+      <h4>Магазин</h4>
+      <ul>
+        {shopLinks.map((l) => <li><a href="#">{l}</a></li>)}
+      </ul>
+    </nav>
+
+    <nav>
+      <h4>Информация</h4>
+      <ul>
+        {infoLinks.map((l) => <li><a href="#">{l}</a></li>)}
+      </ul>
+    </nav>
+
+    <nav>
+      <h4>Обслужване на клиенти</h4>
+      <ul>
+        {careLinks.map((l) => <li><a href="#">{l}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="footer__social">
+      <h4>Нека бъдем социални</h4>
+      <div class="social__icons">
+        <a href="#" aria-label="Instagram">IG</a>
+        <a href="#" aria-label="Facebook">FB</a>
+        <a href="#" aria-label="TikTok">TT</a>
+        <a href="#" aria-label="Pinterest">PT</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap footer__bottom">
+    <p>© {year} Muffin Social. Всички права запазени.</p>
+    <div class="footer__legal">
+      <a href="/privacy">Политика за поверителност</a>
+      <a href="/terms">Условия за ползване</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .newsletter {
+    background: var(--color-dark);
+    color: #f4ece7;
+    padding: 52px 0;
+  }
+  .newsletter__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .newsletter h3 {
+    color: #fff;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+  .newsletter__perks {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: #cfe0da;
+    margin: 0;
+  }
+  .newsletter__label {
+    display: block;
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+    color: #cfe0da;
+  }
+  .newsletter__field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .newsletter__field input {
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: none;
+    flex: 1 1 240px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+  }
+  .newsletter__field .btn {
+    flex: 1 1 auto;
+    white-space: nowrap;
+  }
+
+  .footer {
+    background: var(--color-bg-alt);
+    padding-top: 56px;
+  }
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+    gap: 32px;
+    padding-bottom: 40px;
+  }
+  .footer__brand p {
+    color: var(--color-text-soft);
+    font-size: 0.85rem;
+    margin-top: 10px;
+  }
+  .footer h4 {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .footer ul a {
+    color: var(--color-text-soft);
+    font-size: 0.88rem;
+  }
+  .footer ul a:hover {
+    color: var(--color-pink);
+  }
+  .social__icons {
+    display: flex;
+    gap: 10px;
+  }
+  .social__icons a {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--color-dark);
+  }
+
+  .footer__bottom {
+    border-top: 1px solid var(--color-border);
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--color-text-soft);
+  }
+  .footer__legal {
+    display: flex;
+    gap: 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .logo__meta {
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    color: var(--color-text-soft);
+  }
+  .logo__script {
+    font-family: var(--font-script);
+    font-size: 1.9rem;
+    color: var(--color-pink);
+    line-height: 1;
+  }
+  .logo__word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    color: var(--color-dark);
+    display: block;
+    width: 100%;
+  }
+
+  @media (max-width: 900px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer__bottom {
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+    }
+    .footer__legal {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .newsletter {
+      padding: 40px 0;
+    }
+    .newsletter__inner {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+    }
+    .newsletter__perks {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer__grid {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      text-align: center;
+    }
+    .social__icons {
+      justify-content: center;
+    }
+    .footer ul {
+      align-items: center;
+    }
+  }
+</style>

@@ -1,0 +1,270 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getMuffinBySlug, getAllMuffins } from "../../lib/sanity";
+
+export async function getStaticPaths() {
+  const muffins = await getAllMuffins();
+  return muffins.map((m) => ({ params: { slug: m.slug } }));
+}
+
+const { slug } = Astro.params;
+const muffin = await getMuffinBySlug(slug);
+
+// Търсим опцията за 4 броя по подразбиране. Ако няма такава, вземаме първата налична.
+const defaultBox = muffin.boxOptions?.find((b: any) => b.count === 4) || muffin.boxOptions?.[0];
+
+// Началната снимка е тази за кутия от 4 (ако има такава), иначе основната снимка
+const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via.placeholder.com/400x300";
+---
+
+<BaseLayout>
+  <!-- PRODUCT -->
+  <section class="product">
+    <div class="wrap product__grid">
+      <div class="product__media">
+        <img id="muffin-image" src={initialImage} alt={muffin.title} />
+        <p class="product__desc-label">Форма и декорация:</p>
+        <p class="product__desc">{muffin.baseDescription}</p>
+      </div>
+
+      <div class="product__copy">
+        <span class="eyebrow">Muffin Social</span>
+        <h1>{muffin.title}</h1>
+
+        <form action="/api/order" method="POST" class="order-form">
+          <input type="hidden" name="muffinTitle" value={muffin.title} />
+          <input type="hidden" id="selected-box-input" name="boxQuantity" value={defaultBox?.count || 4} />
+
+          <div class="field">
+            <label>Избери размер кутия:</label>
+            <div class="box-buttons">
+              {muffin.boxOptions?.map((box: any) => {
+                const isDefault = box.count === (defaultBox?.count || 4);
+                return (
+                  <button
+                    type="button"
+                    class={`box-btn ${isDefault ? "active" : ""}`}
+                    data-count={box.count}
+                    data-image={box.imageUrl || muffin.mainImageUrl}
+                  >
+                    <span class="box-btn-title">{box.count} бр.</span>
+                    <span class="box-btn-price">${box.price}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="filling">Избери пълнеж:</label>
+            <select id="filling" name="filling" required>
+              {muffin.availableFillings?.map((f: any) => (
+                <option value={f.name}>
+                  {f.name} {f.extraPrice > 0 ? `(+$${f.extraPrice})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {muffin.allowIndividualPackaging && (
+            <div class="field">
+              <label class="checkbox-label">
+                <input type="checkbox" name="separatePackaging" value="yes" />
+                Опаковай всеки мъфин отделно в кутията (+${muffin.individualPackagingFee})
+              </label>
+            </div>
+          )}
+
+          <hr class="divider" />
+
+          <h3 class="delivery-heading">Данни за доставка (Плащане при доставка)</h3>
+
+          <div class="field">
+            <input type="text" name="customerName" placeholder="Две имена" required />
+          </div>
+          <div class="field">
+            <input type="tel" name="customerPhone" placeholder="Телефон за връзка" required />
+          </div>
+          <div class="field">
+            <textarea name="deliveryAddress" placeholder="Точен адрес за доставка" rows="3" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-solid submit-btn">Поръчай (Наложен платеж)</button>
+        </form>
+
+        <a href="/" class="btn btn-outline back-link">&larr; Обратно към всички мъфини</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const boxButtons = document.querySelectorAll(".box-btn");
+  const selectedInput = document.getElementById("selected-box-input") as HTMLInputElement;
+  const muffinImage = document.getElementById("muffin-image") as HTMLImageElement;
+
+  boxButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      boxButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const count = btn.getAttribute("data-count");
+      const newImageUrl = btn.getAttribute("data-image");
+
+      if (count && selectedInput) {
+        selectedInput.value = count;
+      }
+
+      if (newImageUrl && muffinImage) {
+        muffinImage.style.opacity = "0.3";
+        setTimeout(() => {
+          muffinImage.src = newImageUrl;
+          muffinImage.style.opacity = "1";
+        }, 150);
+      }
+    });
+  });
+</script>
+
+<style>
+  .product {
+    padding: 64px 0 80px;
+  }
+  .product__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 48px;
+  }
+  .product__media img {
+    border-radius: 16px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .product__desc-label {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 18px 0 4px;
+  }
+  .product__desc {
+    color: var(--color-text-soft);
+    margin: 0;
+  }
+
+  .product__copy h1 {
+    font-size: 2.4rem;
+    line-height: 1.1;
+    margin: 6px 0 24px;
+  }
+
+  .field {
+    margin-bottom: 22px;
+  }
+  .field label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  select,
+  input[type="text"],
+  input[type="tel"],
+  textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fff;
+    color: var(--color-dark);
+  }
+
+  .box-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .box-btn {
+    flex: 1;
+    min-width: 84px;
+    padding: 12px 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .box-btn:hover {
+    border-color: var(--color-pink);
+  }
+  .box-btn.active {
+    border-color: var(--color-pink);
+    background: #fff;
+    color: var(--color-pink);
+  }
+  .box-btn-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: block;
+  }
+  .box-btn-price {
+    font-size: 0.8rem;
+    color: var(--color-text-soft);
+    display: block;
+    margin-top: 3px;
+  }
+  .box-btn.active .box-btn-price {
+    color: var(--color-pink);
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+
+  .divider {
+    margin: 28px 0;
+    border: none;
+    border-top: 1px solid var(--color-border);
+  }
+  .delivery-heading {
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .product__grid {
+      grid-template-columns: 1fr;
+    }
+    .product__copy h1 {
+      font-size: 2rem;
+    }
+  }
+</style>

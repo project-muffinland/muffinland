@@ -1,0 +1,45 @@
+---
+// src/pages/index.astro
+import { getAllMuffins } from '../lib/sanity';
+
+const muffins = await getAllMuffins();
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Muffinland</title>
+    <style>
+      body { font-family: system-ui, sans-serif; background: #faf7f2; color: #333; margin: 0; padding: 2rem; }
+      header { text-align: center; margin-bottom: 3rem; }
+      h1 { font-size: 2.5rem; color: #d97706; margin-bottom: 0.5rem; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+      .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+      .card:hover { transform: translateY(-4px); }
+      .card img { width: 100%; height: 220px; object-fit: cover; }
+      .card-content { padding: 1.25rem; }
+      .card h2 { margin: 0 0 0.5rem 0; font-size: 1.3rem; }
+      .card p { color: #666; font-size: 0.95rem; line-height: 1.4; margin: 0; }
+      .btn { margin-top: 1rem; display: inline-block; background: #d97706; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🧁Добре дошли</h1>
+      <p>Изпечени на момента</p>
+    </header>
+
+    <main class="grid">
+      {muffins.map((muffin) => (
+        <a href={`/muffins/${muffin.slug}`} class="card">
+          <img src={muffin.imageUrl || 'https://via.placeholder.com/300x220?text=No+Image'} alt={muffin.title} />
+          <div class="card-content">
+            <h2>{muffin.title}</h2>
+            <p>{muffin.baseDescription}</p>
+            <div class="btn">Поръчай &rarr;</div>
+          </div>
+        </a>
+      ))}
+    </main>
+  </body>
+</html>
