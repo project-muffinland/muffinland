@@ -10,19 +10,15 @@ const careLinks = ["Свържете се с нас", "Доставка", "Вр�
 <section class="newsletter">
   <div class="wrap newsletter__inner">
     <div>
-      <h3>Вземете хубавите неща</h3>
-      <p class="newsletter__perks">
-        <span>🧁 Ексклузивни предложения</span>
-        <span>✦ Нови вкусове</span>
-        <span>♥ Сладки изненади</span>
-        <span>✦ Специални оферти</span>
-      </p>
+      <h3>Свържете се с нас</h3>
+      
     </div>
     <form class="newsletter__form" onsubmit="event.preventDefault()">
-      <label for="newsletter-email" class="newsletter__label">Научете първи.</label>
+      <label for="newsletter-email" class="newsletter__label">Може да зададете вашите въпроса и запитваня тук</label>
       <div class="newsletter__field">
+        <input id="newsletter-email" type="email" placeholder="Вашето запитване" required />
         <input id="newsletter-email" type="email" placeholder="Въведете вашия имейл" required />
-        <button type="submit" class="btn btn-solid">Присъединете се към клуба</button>
+        <button type="submit" class="btn btn-solid">Изпратете</button>
       </div>
     </form>
   </div>
@@ -32,10 +28,8 @@ const careLinks = ["Свържете се с нас", "Доставка", "Вр�
   <div class="wrap footer__grid">
     <div class="footer__brand">
       <a href="/" class="logo">
-        <span class="logo__meta">СЪЗД</span>
         <span class="logo__script">muffin</span>
-        <span class="logo__meta">2026</span>
-        <span class="logo__word">SOCIAL</span>
+        <span class="logo__word">land</span>
       </a>
       <p>Мъфини. По всяко време. Навсякъде.</p>
     </div>
@@ -73,7 +67,7 @@ const careLinks = ["Свържете се с нас", "Доставка", "Вр�
   </div>
 
   <div class="wrap footer__bottom">
-    <p>© {year} Muffin Social. Всички права запазени.</p>
+    <p>© {year} MuffinLand. Всички права запазени.</p>
     <div class="footer__legal">
       <a href="/privacy">Политика за поверителност</a>
       <a href="/terms">Условия за ползване</a>

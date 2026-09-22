@@ -1,0 +1,198 @@
+---
+// src/pages/index.astro
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getAllMuffins } from "../lib/sanity";
+
+const muffins = await getAllMuffins();
+---
+
+<BaseLayout title="Мъфини | Muffin Social">
+  <section class="muffins">
+    <div class="muffins__wrap">
+      <header class="muffins__header">
+        <h1>Добре дошли</h1>
+        <p>Изпечени на момента, с любов към всеки детайл</p>
+      </header>
+
+      <div class="grid">
+        {muffins.map((muffin) => (
+          <a href={`/muffins/${muffin.slug}`} class="card">
+            <div class="card-media">
+              <img src={muffin.imageUrl || 'https://via.placeholder.com/300x220?text=No+Image'} alt={muffin.title} />
+            </div>
+            <div class="card-content">
+              <h2>{muffin.title}</h2>
+              <p>{muffin.baseDescription}</p>
+              <span class="card-btn">Поръчай <span class="arrow">&rarr;</span></span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Self-contained palette/type for this page — not pulling from global.css tokens */
+  .muffins {
+    --mf-bg: #fdf1e7;
+    --mf-card-bg: #ffffff;
+    --mf-pink: #e8737d;
+    --mf-pink-dark: #d95d68;
+    --mf-text: #2c2925;
+    --mf-text-soft: #7a716a;
+    --mf-border: #f0e0d2;
+
+    background: var(--mf-bg);
+    padding: 40px 0 56px;
+  }
+
+  .muffins__wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .muffins__header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .muffins__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--mf-border);
+    color: var(--mf-pink-dark);
+    font-family: "Jost", sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(232, 115, 125, 0.12);
+    margin-bottom: 14px;
+  }
+
+  .muffins__header h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4.5vw, 2.75rem);
+    color: var(--mf-text);
+    margin: 0 0 8px;
+  }
+
+  .muffins__header p {
+    font-family: "Jost", sans-serif;
+    font-size: 1rem;
+    color: var(--mf-text-soft);
+    margin: 0;
+  }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 28px;
+  }
+
+  .card {
+    flex: 0 1 280px;
+    background: var(--mf-card-bg);
+    border: 1px solid var(--mf-border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(44, 41, 37, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 28px rgba(232, 115, 125, 0.18);
+    border-color: var(--mf-pink);
+  }
+
+  .card-media {
+    overflow: hidden;
+  }
+
+  .card-media img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+  }
+
+  .card:hover .card-media img {
+    transform: scale(1.06);
+  }
+
+  .card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .card-content h2 {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--mf-text);
+    margin: 0 0 6px;
+  }
+
+  .card-content p {
+    font-family: "Jost", sans-serif;
+    color: var(--mf-text-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+  }
+
+  .card-btn {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--mf-pink);
+    color: #fff;
+    font-family: "Jost", sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 11px 18px;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(232, 115, 125, 0.3);
+    transition: background 0.2s ease, transform 0.2s ease;
+    align-self: flex-start;
+  }
+
+  .card-btn .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .card:hover .card-btn {
+    background: var(--mf-pink-dark);
+    transform: translateY(-1px);
+  }
+
+  .card:hover .card-btn .arrow {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 480px) {
+    .muffins { padding: 28px 0 40px; }
+    .muffins__header { margin-bottom: 28px; }
+    .grid { gap: 18px; }
+    .card { flex-basis: 100%; max-width: 360px; }
+  }
+</style>

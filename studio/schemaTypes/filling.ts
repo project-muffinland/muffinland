@@ -6,13 +6,30 @@ export default {
     {
       name: 'name',
       title: 'Filling Name',
-      type: 'string', // e.g., "Nutella", "Blueberry Jam", "Vanilla Cream"
+      type: 'string', 
     },
     {
       name: 'extraPrice',
       title: 'Extra Cost per Muffin',
-      type: 'number', // Set to 0 if free
+      type: 'number',
       initialValue: 0
+    },
+    {
+      name: 'allergens',
+      title: 'Алергени (Allergens)',
+      description: 'Изберете алергените, които се съдържат в този пълнеж.',
+      type: 'array',
+      of: [{ type: 'string' }],
+      options: {
+        // By providing only the list (without layout: 'tags'), Sanity automatically renders checkboxes
+        list: [
+          { title: 'Ядки (Nuts)', value: 'Ядки' },
+          { title: 'Млечни (Dairy)', value: 'Млечни продукти' },
+          { title: 'Глутен (Gluten)', value: 'Глутен' },
+          { title: 'Яйца (Eggs)', value: 'Яйца' },
+          { title: 'Соя (Soy)', value: 'Соя' }
+        ]
+      }
     }
   ]
 }

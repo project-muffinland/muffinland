@@ -11,10 +11,14 @@ const { slug } = Astro.params;
 const muffin = await getMuffinBySlug(slug);
 
 // Търсим опцията за 4 броя по подразбиране. Ако няма такава, вземаме първата налична.
-const defaultBox = muffin.boxOptions?.find((b: any) => b.count === 4) || muffin.boxOptions?.[0];
+const defaultBox =
+  muffin.boxOptions?.find((b: any) => b.count === 4) || muffin.boxOptions?.[0];
 
 // Началната снимка е тази за кутия от 4 (ако има такава), иначе основната снимка
-const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via.placeholder.com/400x300";
+const initialImage =
+  defaultBox?.imageUrl ||
+  muffin.mainImageUrl ||
+  "https://via.placeholder.com/400x300";
 ---
 
 <BaseLayout>
@@ -28,71 +32,99 @@ const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via
       </div>
 
       <div class="product__copy">
-        <span class="eyebrow">Muffin Social</span>
+        <span class="eyebrow">Muffin Land</span>
         <h1>{muffin.title}</h1>
 
-        <form action="/api/order" method="POST" class="order-form">
-          <input type="hidden" name="muffinTitle" value={muffin.title} />
-          <input type="hidden" id="selected-box-input" name="boxQuantity" value={defaultBox?.count || 4} />
+        <!-- ЗАМЕНИ СЪЩЕСТВУВАЩАТА ФОРМА С ТАЗИ: -->
+        <form id="add-to-cart-form" class="order-form">
+          <input type="hidden" id="muffin-title" value={muffin.title} />
+          <input
+            type="hidden"
+            id="selected-box-input"
+            value={defaultBox?.count || 4}
+          />
+
+          <!-- Добавяме цената към скритите полета за лесен достъп -->
+          <input
+            type="hidden"
+            id="selected-price-input"
+            value={defaultBox?.price || 0}
+          />
+          <input type="hidden" id="selected-image-input" value={initialImage} />
 
           <div class="field">
             <label>Избери размер кутия:</label>
             <div class="box-buttons">
-              {muffin.boxOptions?.map((box: any) => {
-                const isDefault = box.count === (defaultBox?.count || 4);
-                return (
-                  <button
-                    type="button"
-                    class={`box-btn ${isDefault ? "active" : ""}`}
-                    data-count={box.count}
-                    data-image={box.imageUrl || muffin.mainImageUrl}
-                  >
-                    <span class="box-btn-title">{box.count} бр.</span>
-                    <span class="box-btn-price">${box.price}</span>
-                  </button>
-                );
-              })}
+              {
+                muffin.boxOptions?.map((box: any) => {
+                  const isDefault = box.count === (defaultBox?.count || 4);
+                  return (
+                    <button
+                      type="button"
+                      class={`box-btn ${isDefault ? "active" : ""}`}
+                      data-count={box.count}
+                      data-price={box.price}
+                      data-image={box.imageUrl || muffin.mainImageUrl}
+                    >
+                      <span class="box-btn-title">{box.count} бр.</span>
+                      <span class="box-btn-price">€{box.price}</span>
+                    </button>
+                  );
+                })
+              }
             </div>
           </div>
 
           <div class="field">
             <label for="filling">Избери пълнеж:</label>
-            <select id="filling" name="filling" required>
-              {muffin.availableFillings?.map((f: any) => (
-                <option value={f.name}>
-                  {f.name} {f.extraPrice > 0 ? `(+$${f.extraPrice})` : ""}
-                </option>
-              ))}
+            <select id="filling" required>
+              {
+                muffin.availableFillings?.map((f: any) => (
+                  <option 
+                    value={f.name} 
+                    data-price={f.extraPrice || 0}
+                    data-allergens={f.allergens ? f.allergens.join(', ') : ''}
+                  >
+                    {f.name} {f.extraPrice > 0 ? `(+€${f.extraPrice})` : ""}
+                  </option>
+                ))
+              }
             </select>
-          </div>
-
-          {muffin.allowIndividualPackaging && (
-            <div class="field">
-              <label class="checkbox-label">
-                <input type="checkbox" name="separatePackaging" value="yes" />
-                Опаковай всеки мъфин отделно в кутията (+${muffin.individualPackagingFee})
-              </label>
+            <!-- Контейнер за алергени (ще се показва само ако има такива) -->
+            <div id="allergen-notice" style="display: none; margin-top: 6px; font-size: 0.8rem; color: var(--color-text-soft);">
+              <span style="color: var(--color-pink); font-weight: 600;">⚠ Внимание:</span> Съдържа <span id="allergen-list"></span>
             </div>
-          )}
-
-          <hr class="divider" />
-
-          <h3 class="delivery-heading">Данни за доставка (Плащане при доставка)</h3>
-
-          <div class="field">
-            <input type="text" name="customerName" placeholder="Две имена" required />
-          </div>
-          <div class="field">
-            <input type="tel" name="customerPhone" placeholder="Телефон за връзка" required />
-          </div>
-          <div class="field">
-            <textarea name="deliveryAddress" placeholder="Точен адрес за доставка" rows="3" required></textarea>
           </div>
 
-          <button type="submit" class="btn btn-solid submit-btn">Поръчай (Наложен платеж)</button>
+          {
+            muffin.allowIndividualPackaging && (
+              <div class="field">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="separate-packaging"
+                    data-fee={muffin.individualPackagingFee}
+                  />
+                  Опаковай всеки мъфин отделно в кутията (+€
+                  {muffin.individualPackagingFee})
+                </label>
+              </div>
+            )
+          }
+
+          <button type="submit" class="btn btn-solid submit-btn"
+            >Добави в количката</button
+          >
         </form>
 
-        <a href="/" class="btn btn-outline back-link">&larr; Обратно към всички мъфини</a>
+        <!-- TOAST СЪОБЩЕНИЕ -->
+        <div id="toast" class="toast hidden">
+          <span id="toast-message"></span>
+        </div>
+
+        <a href="/" class="btn btn-outline back-link"
+          >&larr; Обратно към всички мъфини</a
+        >
       </div>
     </div>
   </section>
@@ -101,19 +133,53 @@ const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via
 <script>
   const boxButtons = document.querySelectorAll(".box-btn");
   const selectedInput = document.getElementById("selected-box-input") as HTMLInputElement;
+  const priceInput = document.getElementById("selected-price-input") as HTMLInputElement;
+  const imageInput = document.getElementById("selected-image-input") as HTMLInputElement;
   const muffinImage = document.getElementById("muffin-image") as HTMLImageElement;
+  const form = document.getElementById("add-to-cart-form") as HTMLFormElement;
+  
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toast-message");
 
+  const fillingSelect = document.getElementById("filling") as HTMLSelectElement;
+  const allergenNotice = document.getElementById("allergen-notice");
+  const allergenList = document.getElementById("allergen-list");
+
+  // Функция за обновяване на текста с алергени
+  function updateAllergens() {
+    if (!fillingSelect) return;
+    const selectedOption = fillingSelect.options[fillingSelect.selectedIndex];
+    const allergens = selectedOption.getAttribute("data-allergens");
+    
+    if (allergens && allergenNotice && allergenList) {
+      allergenList.textContent = allergens;
+      allergenNotice.style.display = "block";
+    } else if (allergenNotice) {
+      allergenNotice.style.display = "none";
+    }
+  }
+
+  // Слушаме за промяна от клиента
+  if (fillingSelect) {
+    fillingSelect.addEventListener("change", updateAllergens);
+  }
+  
+  // Стартираме веднъж при зареждане на страницата
+  updateAllergens();
+
+  // Управление на бутоните за бройки
   boxButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       boxButtons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
 
       const count = btn.getAttribute("data-count");
+      const price = btn.getAttribute("data-price");
       const newImageUrl = btn.getAttribute("data-image");
 
-      if (count && selectedInput) {
-        selectedInput.value = count;
-      }
+      if (count && selectedInput) selectedInput.value = count;
+      if (price && priceInput) priceInput.value = price;
+      if (newImageUrl && imageInput) imageInput.value = newImageUrl;
 
       if (newImageUrl && muffinImage) {
         muffinImage.style.opacity = "0.3";
@@ -124,7 +190,101 @@ const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via
       }
     });
   });
+
+  // Добавяне в количката
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = (document.getElementById("muffin-title") as HTMLInputElement).value;
+    const boxCount = selectedInput.value;
+    const boxPrice = parseFloat(priceInput.value);
+    const imageUrl = imageInput.value;
+    
+    const fillingSelect = document.getElementById("filling") as HTMLSelectElement;
+    const selectedFillingOption = fillingSelect.options[fillingSelect.selectedIndex];
+    const fillingName = selectedFillingOption.value;
+    const fillingPrice = parseFloat(selectedFillingOption.getAttribute("data-price") || "0");
+
+    const allergens = selectedFillingOption.getAttribute("data-allergens") || "";
+
+    const packagingCheckbox = document.getElementById("separate-packaging") as HTMLInputElement;
+    const isPackaged = packagingCheckbox ? packagingCheckbox.checked : false;
+    const packagingFee = isPackaged ? parseFloat(packagingCheckbox.getAttribute("data-fee") || "0") : 0;
+
+    // Пресмятаме крайната цена за този артикул
+    const totalPrice = boxPrice + fillingPrice + packagingFee;
+
+    const cartItem = {
+      id: Date.now().toString(), // Уникално ID за триене
+      title,
+      imageUrl,
+      boxCount,
+      fillingName,
+      isPackaged,
+      totalPrice,
+      quantity: 1,
+      allergens
+    };
+
+    // Запис в localStorage
+    const cart = JSON.parse(localStorage.getItem("muffinCart") || "[]");
+    cart.push(cartItem);
+    localStorage.setItem("muffinCart", JSON.stringify(cart));
+
+    // Изстрелваме събитие към Navbar-а
+    window.dispatchEvent(new Event("cart-updated"));
+
+    // Показваме съобщението (С по-голям текст и икона)
+    if (toast) {
+      toast.innerHTML = `
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <div style="text-align: left; line-height: 1.3;">
+          <div style="font-family: var(--font-sans); font-weight: 600; font-size: 1.15rem; color: #fff;">${title}</div>
+          <div style="font-size: 0.9rem; font-family: var(--font-sans); color: #cfe0da; margin-top: 4px;">Успешно добавено в количката</div>
+        </div>
+      `;
+      toast.classList.remove("hidden");
+      toast.classList.add("show");
+      
+      setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.add("hidden");
+      }, 3000);
+    }
+
+  });
 </script>
+
+<style>
+  /* Съществуващите ти стилове остават... добави само това най-отдолу: */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-dark);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 1000;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 20px);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+</style>
 
 <style>
   .product {
@@ -267,4 +427,45 @@ const initialImage = defaultBox?.imageUrl || muffin.mainImageUrl || "https://via
       font-size: 2rem;
     }
   }
+
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-dark);
+    color: #fff;
+    /* Увеличено отстояние за по-голям обем */
+    padding: 24px 40px; 
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    /* Повече разстояние между иконата и текста */
+    gap: 20px; 
+    z-index: 9999;
+    
+    width: max-content;
+    /* Задаваме минимална ширина, за да не е прекалено късо */
+    min-width: 320px; 
+    height: fit-content;
+    /* Увеличено, за да побере по-големия текст без да се реже */
+    max-height: 120px; 
+    
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    border: 1px solid var(--color-pink);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  
+  .toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
 </style>

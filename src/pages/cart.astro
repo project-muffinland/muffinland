@@ -1,0 +1,639 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Количка | Muffinland">
+  <section class="checkout-section">
+    <div class="wrap">
+
+      <!-- SUCCESS МЕСИДЖ -->
+      <div id="success-state" class="success-state" style="display: none;">
+        <div class="success-icon">✓</div>
+        <h1>Благодаря за вашата поръчка!</h1>
+        <p>Ще се свържем с вас скоро за потвърждение.</p>
+        <a href="/" class="btn btn-solid">Върнете се назад</a>
+      </div>
+
+      <!-- ОСНОВНА КОЛИЧКА -->
+      <div id="checkout-state">
+        <form id="checkout-form" class="checkout-form">
+          <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE" />
+          <input type="hidden" name="Поръчани продукти" id="cart-contents-hidden" />
+
+          <!-- Honeypot: истински потребители никога не виждат или попълват това поле.
+               Web3Forms автоматично отхвърля заявката, ако полето е попълнено. Безплатно. -->
+          <input type="checkbox" name="botcheck" class="hidden" style="display: none;" tabindex="-1" autocomplete="off" />
+
+          <!-- Секция 2: Преглед на поръчката -->
+          <div class="form-section cart-review">
+            <div class="cart-heading">
+              <h1>Вашата количка</h1>
+              <span id="cart-count" class="cart-count"></span>
+            </div>
+
+            <div id="cart-items-container">
+              <p class="cart-loading">Зареждане на количката...</p>
+            </div>
+          </div>
+
+          <!-- Дясна колона: данни за доставка + общо/потвърждение вървят заедно
+               като собствен стек, независимо от височината на количката -->
+          <div class="order-column">
+            <!-- Секция 1: Данни за доставка -->
+            <div class="form-section delivery-fields">
+              <h3>Данни за доставка</h3>
+
+              <div class="field">
+                <label>Две имена</label>
+                <input type="text" name="name" placeholder="Иван Иванов" required />
+              </div>
+              <div class="field">
+                <label>Адрес за доставка</label>
+                <input type="text" name="address" placeholder="гр. София, ул. Примерна 1" required />
+              </div>
+              <div class="field">
+                <label>Телефонен номер</label>
+                <input type="tel" name="phone" placeholder="0888 123 456" required />
+              </div>
+              <div class="field">
+                <label>Допълнителна забележка</label>
+                <textarea name="notes" placeholder="Ако имате специални изисквания..." rows="3"></textarea>
+              </div>
+            </div>
+
+            <!-- Секция 3: Общо и потвърждение -->
+            <div class="form-section order-submit">
+              <div class="summary-block">
+                <div class="summary-row">
+                  <span>Междинна сума</span>
+                  <span id="cart-subtotal">€0.00</span>
+                </div>
+                <div class="summary-row summary-total">
+                  <span>Общо</span>
+                  <span id="cart-total">€0.00</span>
+                </div>
+              </div>
+
+              <!--
+                По желание: Cloudflare Turnstile (изисква платен Web3Forms план).
+                1) Добави в <head> (в BaseLayout.astro):
+                   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                2) Разкоментирай реда по-долу и сложи истинския си sitekey:
+                   <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY_HERE" data-theme="light"></div>
+                3) В Web3Forms Dashboard -> Settings -> избери "turnstile" като captcha provider
+                   и въведи Secret Key.
+                Дотогава honeypot полето по-горе е активно и е безплатно.
+              -->
+
+              <button type="submit" class="btn btn-solid submit-btn">Завърши поръчката</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const cartContainer = document.getElementById("cart-items-container");
+  const cartTotalEl = document.getElementById("cart-total");
+  const cartSubtotalEl = document.getElementById("cart-subtotal");
+  const cartCountEl = document.getElementById("cart-count");
+  const deliveryFieldsSection = document.querySelector(".delivery-fields") as HTMLElement | null;
+  const orderSubmitSection = document.querySelector(".order-submit") as HTMLElement | null;
+  const form = document.getElementById("checkout-form") as HTMLFormElement;
+  const hiddenCartData = document.getElementById("cart-contents-hidden") as HTMLInputElement;
+  const checkoutState = document.getElementById("checkout-state");
+  const successState = document.getElementById("success-state");
+
+  function renderCart() {
+    const cart = JSON.parse(localStorage.getItem("muffinCart") || "[]");
+
+    if (cart.length === 0) {
+      if (cartContainer) {
+        cartContainer.innerHTML = `
+          <div class="cart-empty">
+            <p>Количката е празна.</p>
+            <a href="/" class="btn btn-solid">Разгледай менюто</a>
+          </div>
+        `;
+      }
+      if (deliveryFieldsSection) deliveryFieldsSection.style.display = "none";
+      if (orderSubmitSection) orderSubmitSection.style.display = "none";
+      if (cartCountEl) cartCountEl.textContent = "";
+      return;
+    }
+
+    if (deliveryFieldsSection) deliveryFieldsSection.style.display = "";
+    if (orderSubmitSection) orderSubmitSection.style.display = "";
+
+    let html = "";
+    let total = 0;
+    let itemCount = 0;
+    let orderSummaryText = "";
+
+    cart.forEach((item: any, index: number) => {
+      const linePrice = item.totalPrice * item.quantity;
+      total += linePrice;
+      itemCount += item.quantity;
+
+      html += `
+        <div class="cart-item recipe-card">
+          <div class="recipe-card-head">
+            <div class="cart-item-media">
+              <img src="${item.imageUrl}" alt="${item.title}" />
+            </div>
+
+            <div class="recipe-card-heading">
+              <div class="recipe-title-row">
+                <h4>${item.title}</h4>
+                <span class="serves-badge">Кутия от ${item.boxCount} бр.</span>
+              </div>
+              <ul class="ingredient-list">
+                <li>Пълнеж: ${item.fillingName}</li>${item.allergens ? `<li>Алергени: ${item.allergens}</li>` : ""}
+                ${item.isPackaged ? "<li>Индивидуална опаковка</li>" : ""}
+              </ul>
+            </div>
+          </div>
+
+          <div class="cart-item-actions">
+            <div class="qty-selector">
+              <button type="button" class="qty-btn minus-btn" data-index="${index}" aria-label="Намали количеството">−</button>
+              <span class="qty-val">${item.quantity}</span>
+              <button type="button" class="qty-btn plus-btn" data-index="${index}" aria-label="Увеличи количеството">+</button>
+            </div>
+            <div class="cart-item-price">€${linePrice.toFixed(2)}</div>
+          </div>
+        </div>
+      `;
+
+      orderSummaryText += `${item.quantity}x ${item.title} (Кутия от ${item.boxCount}) | Пълнеж: ${item.fillingName} | Цена: €${linePrice.toFixed(2)}\n`;
+    });
+
+    if (cartContainer) cartContainer.innerHTML = html;
+    if (cartSubtotalEl) cartSubtotalEl.textContent = `€${total.toFixed(2)}`;
+    if (cartTotalEl) cartTotalEl.textContent = `€${total.toFixed(2)}`;
+    if (cartCountEl) cartCountEl.textContent = `${itemCount} ${itemCount === 1 ? "продукт" : "продукта"}`;
+    if (hiddenCartData) hiddenCartData.value = orderSummaryText + `\nОБЩА СУМА: €${total.toFixed(2)}`;
+
+    document.querySelectorAll(".plus-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const idx = (e.target as HTMLElement).getAttribute("data-index");
+        if (idx !== null) {
+          cart[parseInt(idx)].quantity += 1;
+          localStorage.setItem("muffinCart", JSON.stringify(cart));
+          window.dispatchEvent(new Event("cart-updated"));
+          renderCart();
+        }
+      });
+    });
+
+    document.querySelectorAll(".minus-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const idx = (e.target as HTMLElement).getAttribute("data-index");
+        if (idx !== null) {
+          cart[parseInt(idx)].quantity -= 1;
+          if (cart[parseInt(idx)].quantity <= 0) {
+            cart.splice(parseInt(idx), 1);
+          }
+          localStorage.setItem("muffinCart", JSON.stringify(cart));
+          window.dispatchEvent(new Event("cart-updated"));
+          renderCart();
+        }
+      });
+    });
+  }
+
+  renderCart();
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      submitBtn.textContent = "Изпращане...";
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          body: formData
+        });
+
+        if (response.ok) {
+          localStorage.removeItem("muffinCart");
+          window.dispatchEvent(new Event("cart-updated"));
+          if (checkoutState) checkoutState.style.display = "none";
+          if (successState) successState.style.display = "block";
+        } else {
+          alert("Възникна грешка. Моля опитайте отново.");
+          submitBtn.textContent = "Завърши поръчката";
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        localStorage.removeItem("muffinCart");
+        window.dispatchEvent(new Event("cart-updated"));
+        if (checkoutState) checkoutState.style.display = "none";
+        if (successState) successState.style.display = "block";
+      }
+    });
+  }
+</script>
+
+<style is:global>
+  .checkout-section {
+    padding: 64px 0 80px;
+  }
+
+  /* The form IS the grid container, so submit button stays inside <form>
+     while still being reorderable relative to the other sections.
+     Only ONE row now: "review" and "right" are separate grid items side by
+     side, so a tall cart list can no longer stretch the row and drag the
+     total/submit block down with it. */
+  .checkout-form {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    grid-template-areas: "review right";
+    gap: 48px;
+    align-items: start;
+  }
+  .form-section.cart-review {
+    grid-area: review;
+  }
+  /* The delivery fields + total/submit form their own vertical stack,
+     pinned directly under each other regardless of how long the cart is */
+  .order-column {
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .cart-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .cart-heading h1 {
+    margin: 0;
+  }
+  .cart-count {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--color-text-soft);
+    white-space: nowrap;
+  }
+
+  #cart-items-container {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .cart-loading {
+    padding: 32px;
+    margin: 0;
+    color: var(--color-text-soft);
+    font-family: var(--font-sans);
+  }
+
+  .cart-empty {
+    padding: 56px 32px;
+    text-align: center;
+    background: #fff;
+    border: 1px dashed var(--color-border);
+    border-radius: 16px;
+  }
+  .cart-empty p {
+    margin: 0 0 20px;
+    color: var(--color-text-soft);
+    font-family: var(--font-sans);
+  }
+
+  /* Each cart item reads like its own little recipe card */
+  .recipe-card {
+    background: #fff;
+    border: 1.5px dashed var(--color-border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .recipe-card:hover {
+    border-color: var(--color-pink);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  }
+
+  .recipe-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .cart-item-media {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+  .cart-item-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .recipe-card-heading {
+    flex: 1;
+    min-width: 0;
+  }
+  .recipe-title-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-bottom: 8px;
+  }
+  .recipe-title-row h4 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .serves-badge {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-pink);
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .ingredient-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ingredient-list li {
+    position: relative;
+    padding-left: 16px;
+    font-size: 0.85rem;
+    color: var(--color-text-soft);
+    font-family: var(--font-sans);
+    margin-bottom: 4px;
+  }
+  .ingredient-list li:last-child {
+    margin-bottom: 0;
+  }
+  .ingredient-list li::before {
+    content: "\2013";
+    position: absolute;
+    left: 0;
+    color: var(--color-pink);
+  }
+
+  .cart-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .qty-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+    height: 36px;
+  }
+  .qty-btn {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 100%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--color-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .qty-btn:hover {
+    background: var(--color-bg-alt);
+  }
+  .qty-btn:first-child {
+    border-radius: 8px 0 0 8px;
+  }
+  .qty-btn:last-child {
+    border-radius: 0 8px 8px 0;
+  }
+  .qty-val {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    width: 28px;
+    text-align: center;
+  }
+
+  .cart-item-price {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.05rem;
+    min-width: 68px;
+    text-align: right;
+  }
+
+  /* Delivery fields + order/submit cards */
+  .form-section.delivery-fields,
+  .form-section.order-submit {
+    background: var(--color-bg-alt);
+    padding: 32px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+  }
+  .form-section h3 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+
+  .summary-block {
+    margin-bottom: 24px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--color-text-soft);
+    margin-bottom: 10px;
+  }
+  .summary-total {
+    margin-bottom: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-dark);
+  }
+  .summary-total span:last-child {
+    color: var(--color-pink);
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+  .field:last-child {
+    margin-bottom: 0;
+  }
+  .field label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fff;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-pink);
+  }
+  textarea {
+    resize: vertical;
+  }
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.05rem;
+  }
+  .submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Success state */
+  .success-state {
+    text-align: center;
+    padding: 100px 0;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: var(--color-pink);
+    color: #fff;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .success-state h1 {
+    font-size: 2.2rem;
+    color: var(--color-dark);
+    margin-bottom: 12px;
+  }
+  .success-state p {
+    margin-bottom: 30px;
+    color: var(--color-text-soft);
+    font-family: var(--font-sans);
+  }
+
+  /* Mobile: delivery info first, then review, then total + submit.
+     .order-column only exists to pin the two right-column sections
+     together on desktop — on mobile it needs to get out of the way so
+     .delivery-fields and .order-submit become direct flex children again
+     and can be reordered/spaced independently (detached, per design). */
+  @media (max-width: 900px) {
+    .checkout-form {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      /* base rule sets align-items: start for the desktop grid; in a
+         flex column that means "shrink to content width", which is why
+         the form/button were hugging the left edge instead of filling
+         the row like the cart tiles */
+      align-items: stretch;
+    }
+    .order-column {
+      display: contents;
+    }
+    .form-section.delivery-fields {
+      order: 1;
+    }
+    .form-section.cart-review {
+      order: 2;
+    }
+    .form-section.order-submit {
+      order: 3;
+    }
+    .form-section.delivery-fields,
+    .form-section.order-submit {
+      padding: 28px;
+    }
+    .field {
+      margin-bottom: 22px;
+    }
+    .form-section h3 {
+      margin-bottom: 22px;
+    }
+    input, textarea {
+      padding: 13px 14px;
+    }
+  }
+
+  @media (max-width: 550px) {
+    .cart-heading {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+    .cart-heading h1 {
+      font-size: 1.6rem;
+    }
+    .recipe-card {
+      padding: 16px;
+    }
+    .recipe-card-head {
+      gap: 14px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+    }
+    .cart-item-media {
+      width: 60px;
+      height: 60px;
+    }
+    .recipe-title-row h4 {
+      font-size: 1.05rem;
+    }
+    .form-section.delivery-fields,
+    .form-section.order-submit {
+      padding: 24px;
+    }
+  }
+</style>

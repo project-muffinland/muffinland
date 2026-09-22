@@ -32,7 +32,7 @@ export async function getMuffinBySlug(slug: string) {
       },
       allowIndividualPackaging,
       individualPackagingFee,
-      "availableFillings": availableFillings[]->{ name, extraPrice }
+      "availableFillings": availableFillings[]->{ name, extraPrice, allergens }
     }
   `, { slug });
 }
