@@ -1,39 +1,107 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getHomepage } from "../lib/sanity";
+
+const homepage = await getHomepage();
+const bestSellers = homepage?.bestSellers ?? [];
+const gallery = homepage?.gallery ?? [];
+const heroImageUrl = homepage?.heroImageUrl ?? null;
+const PREVIEW_COUNT = 6; // shown on the page: 6 (desktop/tablet/large phones); CSS trims to 4 on very small phones
+const previewImages = gallery.slice(0, PREVIEW_COUNT);
+const hasMore = gallery.length > 4;
+const moreOnAllScreens = gallery.length > PREVIEW_COUNT;
 
 // Static placeholder data — replace with your own content source.
 const muffins = [
-  { _id: "1", name: "Боровинково блаженство", slug: "blueberry-bliss", imageUrl: "https://picsum.photos/seed/muffin1/500/500" },
-  { _id: "2", name: "Двоен шоколад", slug: "double-chocolate", imageUrl: "https://picsum.photos/seed/muffin2/500/500" },
-  { _id: "3", name: "Солен карамел с хрупкава поръска", slug: "salted-caramel-crumble", imageUrl: "https://picsum.photos/seed/muffin3/500/500" },
-  { _id: "4", name: "Банан и орех", slug: "banana-walnut", imageUrl: "https://picsum.photos/seed/muffin4/500/500" },
-  { _id: "5", name: "Лимон и маково семе", slug: "lemon-poppyseed", imageUrl: "https://picsum.photos/seed/muffin5/500/500" },
-  { _id: "6", name: "Канелен щройзел", slug: "cinnamon-streusel", imageUrl: "https://picsum.photos/seed/muffin6/500/500" },
+  {
+    _id: "1",
+    name: "Боровинково блаженство",
+    slug: "blueberry-bliss",
+    imageUrl: "https://picsum.photos/seed/muffin1/500/500",
+  },
+  {
+    _id: "2",
+    name: "Двоен шоколад",
+    slug: "double-chocolate",
+    imageUrl: "https://picsum.photos/seed/muffin2/500/500",
+  },
+  {
+    _id: "3",
+    name: "Солен карамел с хрупкава поръска",
+    slug: "salted-caramel-crumble",
+    imageUrl: "https://picsum.photos/seed/muffin3/500/500",
+  },
+  {
+    _id: "4",
+    name: "Банан и орех",
+    slug: "banana-walnut",
+    imageUrl: "https://picsum.photos/seed/muffin4/500/500",
+  },
+  {
+    _id: "5",
+    name: "Лимон и маково семе",
+    slug: "lemon-poppyseed",
+    imageUrl: "https://picsum.photos/seed/muffin5/500/500",
+  },
+  {
+    _id: "6",
+    name: "Канелен щройзел",
+    slug: "cinnamon-streusel",
+    imageUrl: "https://picsum.photos/seed/muffin6/500/500",
+  },
 ];
 
-const heroImageUrl = "https://picsum.photos/seed/muffinhero/620/700";
 const heroImageAlt = "Прясно изпечен мъфин в рустикална хартиена опаковка";
 
 const icons: Record<string, string> = {
-  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5c-.3 0-.6-.1-.8-.3C7.6 17.4 4 14.2 4 10.4 4 7.9 6 6 8.4 6c1.4 0 2.7.7 3.6 1.8C12.9 6.7 14.2 6 15.6 6 18 6 20 7.9 20 10.4c0 3.8-3.6 7-7.2 9.8-.2.2-.5.3-.8.3Z"/></svg>`,
-  leaf: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c7-1 12-6 13-13-8 .5-13 4.5-13 13Z"/><path d="M5 19c1-4 3.5-7 8-9.5"/></svg>`,
-  whisk: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v5"/><path d="M8 7c-1.8 1.8-1.8 8 4 12"/><path d="M16 7c1.8 1.8 1.8 8-4 12"/><path d="M12 7c-.8 2.5-.8 7.5 0 12"/></svg>`,
-  gift: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M4 13h16"/><path d="M12 9v11"/><path d="M12 9C10 9 8 7.8 8 6c0-1.1.9-2 2-2 1.7 0 2 2 2 5Z"/><path d="M12 9c2 0 4-1.2 4-3 0-1.1-.9-2-2-2-1.7 0-2 2-2 5Z"/></svg>`,
-  truck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="12" height="9" rx="1"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/></svg>`,
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+  leaf: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`,
+  whisk: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/></svg>`,
+  gift: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>`,
+  truck: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`,
 };
 
 const features = [
-  { icon: "heart", title: "Направено с любов", copy: "Всеки мъфин е изпечен с грижа." },
-  { icon: "leaf", title: "Качествени съставки", copy: "Използваме прости, първокласни съставки." },
-  { icon: "whisk", title: "Ръчна изработка", copy: "Малки партиди. Голям вкус." },
-  { icon: "gift", title: "Идеално за всеки повод", copy: "Рождени дни, празненства или просто така." },
-  { icon: "truck", title: "Доставка в цялата страна", copy: "Вкусотия, доставена до вас." },
+  {
+    icon: "heart",
+    title: "Направено с любов",
+    copy: "Всеки мъфин е изпечен с грижа.",
+  },
+  {
+    icon: "leaf",
+    title: "Качествени съставки",
+    copy: "Използваме прости, първокласни съставки.",
+  },
+  {
+    icon: "whisk",
+    title: "Ръчна изработка",
+    copy: "Малки партиди. Голям вкус.",
+  },
+  {
+    icon: "gift",
+    title: "Идеално за",
+    copy: "Рождени дни, празненства или просто така.",
+  },
+  {
+    icon: "truck",
+    title: "Прясна доставка", 
+    copy: "Вкусотия, доставена до вас.",
+  },
 ];
 
 const testimonials = [
-  { quote: "Най-накрая, мъфин, който подхожда на всяка сутрин.", name: "Джесика Р." }, /* */
-  { quote: "Купих една кутия. Случайно поръчах още шест.", name: "Майк Т." }, /* */
-  { quote: "Тези развалиха всяка друга пекарна за мен.", name: "Алекс П." }, /* */
+  {
+    quote: "Най-накрая, мъфин, който подхожда на всяка сутрин.",
+    name: "Джесика Р.",
+  } /* */,
+  {
+    quote: "Купих една кутия. Случайно поръчах още шест.",
+    name: "Майк Т.",
+  } /* */,
+  {
+    quote: "Тези развалиха всяка друга пекарна за мен.",
+    name: "Алекс П.",
+  } /* */,
 ];
 ---
 
@@ -49,12 +117,12 @@ const testimonials = [
           с мъфини.
         </h1>
         <p>
-          Пухкави, ръчно изработени мъфини, изпечени в малки партиди.
-          Създадени за сладките моменти в живота.
+          Пухкави, ръчно изработени мъфини, изпечени в малки партиди. Създадени
+          за сладките моменти в живота.
         </p>
         <div class="hero__actions">
-          <a href="/shop" class="btn btn-solid">Пазарувай сега</a>
-          <a href="/flavors" class="btn btn-outline">Разгледай вкусовете</a>
+          <a href="/muffins" class="btn btn-solid">Виж Мъфини</a>
+          <a href="/muffins" class="btn btn-outline">Свържи се с нас</a>
         </div>
       </div>
       <div class="hero__media">
@@ -67,13 +135,19 @@ const testimonials = [
   <!-- FEATURES -->
   <section class="features">
     <div class="wrap features__grid">
-      {features.map((f) => (
-        <div class="feature">
-          <span class="feature__icon" aria-hidden="true" set:html={icons[f.icon]} />
-          <h4>{f.title}</h4>
-          <p>{f.copy}</p>
-        </div>
-          ))}
+      {
+        features.map((f) => (
+          <div class="feature">
+            <span
+              class="feature__icon"
+              aria-hidden="true"
+              set:html={icons[f.icon]}
+            />
+            <h4>{f.title}</h4>
+            <p>{f.copy}</p>
+          </div>
+        ))
+      }
     </div>
   </section>
 
@@ -86,19 +160,32 @@ const testimonials = [
       </div>
 
       <div class="flavors__grid">
-        {muffins.map((m) => (
-          <article class="flavor-card">
-            <a href={`/muffins/${m.slug}`} class="flavor-card__media">
-              <img src={m.imageUrl} alt={m.name} />
-            </a>
-            <h4>{m.name}</h4>
-            <a href={`/muffins/${m.slug}`} class="btn btn-solid btn-small">Пазарувай сега</a>
-          </article>
-        ))}
+        {
+          bestSellers.map((item) => (
+            <article class="flavor-card">
+              <a
+                href={`/muffins/${item.muffinSlug}`}
+                class="flavor-card__media"
+              >
+                <img src={item.muffinImageUrl} alt={item.muffinTitle} />
+              </a>
+              <h4>{item.muffinTitle}</h4>
+              {item.fillingName && (
+                <p class="flavor-card__filling">С {item.fillingName}</p>
+              )}
+              <a
+                href={`/muffins/${item.muffinSlug}`}
+                class="btn btn-solid btn-small"
+              >
+                Купи
+              </a>
+            </article>
+          ))
+        }
       </div>
 
       <div class="flavors__cta">
-        <a href="/flavors" class="btn btn-outline">Виж всички вкусове</a>
+        <a href="/muffins" class="btn btn-outline">Виж всички вкусове</a>
       </div>
     </div>
   </section>
@@ -107,58 +194,305 @@ const testimonials = [
   <section class="story">
     <div class="wrap story__grid">
       <div class="story__media">
-        <img src="https://picsum.photos/seed/muffinbox/600/500" alt="Подаръчна кутия с различни мъфини, вързана с панделка" />
+        <img
+          src="https://picsum.photos/seed/muffinbox/600/500"
+          alt="Подаръчна кутия с различни мъфини, вързана с панделка"
+        />
       </div>
       <div class="story__copy">
         <span class="eyebrow">Нашата история</span>
         <h2>Повече от мъфин,<br />това е <em>уют</em>.</h2>
         <p>
-          Muffin Social беше създадена, за да внесе малко топлина в ежедневните моменти.
-          Независимо дали е почерпка за вас самите или сладък начин да отпразнувате нечий празник,
-          ние сме тук, за да направим всяка сутрин малко по-добра.
+          Muffin Social беше създадена, за да внесе малко топлина в ежедневните
+          моменти. Независимо дали е почерпка за вас самите или сладък начин да
+          отпразнувате нечий празник, ние сме тук, за да направим всяка сутрин
+          малко по-добра.
         </p>
         <a href="/about" class="btn btn-solid">Нашата история</a>
       </div>
     </div>
   </section>
 
-  <!-- TESTIMONIALS -->
+  <!-- TESTIMONIALS 
   <section class="testimonials">
     <div class="wrap">
       <div class="section-heading">
         <span class="eyebrow">Хората говорят</span>
       </div>
       <div class="testimonials__grid">
-        {testimonials.map((t) => (
-          <blockquote class="testimonial">
-            <div class="testimonial__stars">★★★★★</div>
-            <p>&ldquo;{t.quote}&rdquo;</p>
-            <cite>— {t.name}</cite>
-          </blockquote>
-        ))}
+        {
+          testimonials.map((t) => (
+            <blockquote class="testimonial">
+              <div class="testimonial__stars">★★★★★</div>
+              <p>&ldquo;{t.quote}&rdquo;</p>
+              <cite>— {t.name}</cite>
+            </blockquote>
+          ))
+        }
       </div>
     </div>
   </section>
+  -->
 
-  <!-- INSTAGRAM -->
-  <section class="community">
+  <section class="gx-section">
     <div class="wrap">
       <div class="section-heading">
-        <span class="eyebrow">Присъединете се към общността на Muffin Social</span>
-        <p class="community__handle">@muffinsocial</p>
+        <span class="eyebrow">Разгледайте</span>
+        <h2>Нашата Галерия</h2>
       </div>
-      <div class="community__grid">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <div class="community__item">
-            <img src={`https://picsum.photos/seed/muffingram${i}/260/260`} alt="Снимка на общността на Muffin Social" />
+
+      <!-- Preview: 6 on desktop, 6 on tablet / large phones, 4 on small phones -->
+      <div class="gx-preview">
+        {
+          previewImages.map((item, i) => (
+            <button
+              type="button"
+              class:list={["gx-thumb", { "gx-thumb--extra": i >= 4 }]}
+              data-gx-open={i}
+              aria-label={`Отвори снимка ${i + 1}`}
+            >
+              <img src={item.imageUrl} alt={item.alt || ""} loading="lazy" />
+            </button>
+          ))
+        }
+      </div>
+
+      {
+        hasMore && (
+          <div
+            class:list={[
+              "gx-cta",
+              { "gx-cta--small-screens-only": !moreOnAllScreens },
+            ]}
+          >
+            <button type="button" id="gxSeeAll" class="btn btn-outline">
+              Виж всички снимки
+            </button>
           </div>
-        ))}
-      </div>
-      <div class="flavors__cta">
-        <a href="https://instagram.com" class="btn btn-outline">Последвайте ни в Instagram</a>
-      </div>
+        )
+      }
     </div>
+
+    <!-- ONE popup window: it shows either the grid of all photos or a single photo with prev/next -->
+    <dialog id="gxDialog" class="gx-dialog" aria-label="Нашата Галерия">
+      <div class="gx-dialog__header">
+        <button type="button" id="gxBack" class="gx-back" hidden>
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><polyline points="15 18 9 12 15 6"></polyline></svg
+          >
+          Всички снимки
+        </button>
+        <span class="gx-dialog__title" id="gxTitle">Нашата Галерия</span>
+        <span class="gx-counter" id="gxCounter" hidden></span>
+        <button type="button" id="gxClose" class="gx-close" aria-label="Затвори"
+          >&times;</button
+        >
+      </div>
+
+      <!-- View 1: all photos, scrollable inside the popup -->
+      <div class="gx-all" id="gxAll">
+        {
+          gallery.map((item, i) => (
+            <button
+              type="button"
+              class="gx-thumb"
+              data-gx-open={i}
+              aria-label={`Отвори снимка ${i + 1}`}
+            >
+              <img src={item.imageUrl} alt={item.alt || ""} loading="lazy" />
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- View 2: single photo with previous / next -->
+      <div class="gx-viewer" id="gxViewer" hidden>
+        <div class="gx-viewer__bg" id="gxBg" aria-hidden="true"></div>
+        <div class="gx-stage" id="gxStage">
+          <button
+            type="button"
+            id="gxPrev"
+            class="gx-nav gx-nav--prev"
+            aria-label="Предишна снимка"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><polyline points="15 18 9 12 15 6"></polyline></svg
+            >
+          </button>
+
+          <div class="gx-stage__frame">
+            <img id="gxImage" class="gx-stage__img" src="" alt="" />
+          </div>
+
+          <button
+            type="button"
+            id="gxNext"
+            class="gx-nav gx-nav--next"
+            aria-label="Следваща снимка"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><polyline points="9 18 15 12 9 6"></polyline></svg
+            >
+          </button>
+        </div>
+
+        <div class="gx-viewer__footer">
+          <a id="gxCta" class="btn btn-solid" href="#">Виж мъфина</a>
+        </div>
+      </div>
+    </dialog>
   </section>
+
+  <script define:vars={{ gallery }}>
+    const dialog = document.getElementById("gxDialog");
+    const allView = document.getElementById("gxAll");
+    const viewer = document.getElementById("gxViewer");
+    const stage = document.getElementById("gxStage");
+    const img = document.getElementById("gxImage");
+    const bg = document.getElementById("gxBg");
+    const cta = document.getElementById("gxCta");
+    const prevBtn = document.getElementById("gxPrev");
+    const nextBtn = document.getElementById("gxNext");
+    const backBtn = document.getElementById("gxBack");
+    const closeBtn = document.getElementById("gxClose");
+    const title = document.getElementById("gxTitle");
+    const counter = document.getElementById("gxCounter");
+    const seeAllBtn = document.getElementById("gxSeeAll");
+
+    let current = 0;
+
+    function preload(i) {
+      if (gallery[i]) new Image().src = gallery[i].imageUrl;
+    }
+
+    function showPhoto(index) {
+      current = index;
+      const item = gallery[current];
+      img.src = item.imageUrl;
+      img.alt = item.alt || "";
+      bg.style.backgroundImage = `url("${item.imageUrl}")`;
+      counter.textContent = `${current + 1} / ${gallery.length}`;
+
+      if (item.muffinSlug) {
+        cta.href = `/muffins/${item.muffinSlug}`;
+        cta.style.display = "";
+      } else {
+        cta.style.display = "none";
+      }
+
+      prevBtn.style.visibility = current > 0 ? "visible" : "hidden";
+      nextBtn.style.visibility =
+        current < gallery.length - 1 ? "visible" : "hidden";
+
+      preload(current - 1);
+      preload(current + 1);
+    }
+
+    function setView(view) {
+      const isViewer = view === "viewer";
+      viewer.hidden = !isViewer;
+      allView.hidden = isViewer;
+      backBtn.hidden = !isViewer;
+      title.hidden = isViewer;
+      counter.hidden = !isViewer;
+    }
+
+    function openDialog(view, index) {
+      if (!dialog.open) {
+        dialog.showModal();
+        document.documentElement.style.overflow = "hidden";
+      }
+      setView(view);
+      if (view === "viewer") showPhoto(index);
+    }
+
+    function goPrev() {
+      if (current > 0) showPhoto(current - 1);
+    }
+    function goNext() {
+      if (current < gallery.length - 1) showPhoto(current + 1);
+    }
+
+    // Any thumbnail (on the page or inside the popup) opens the single-photo view
+    document.querySelectorAll("[data-gx-open]").forEach((btn) => {
+      btn.addEventListener("click", () =>
+        openDialog("viewer", Number(btn.dataset.gxOpen)),
+      );
+    });
+
+    seeAllBtn?.addEventListener("click", () => {
+      openDialog("all");
+      allView.scrollTop = 0;
+    });
+
+    backBtn.addEventListener("click", () => setView("all"));
+    prevBtn.addEventListener("click", goPrev);
+    nextBtn.addEventListener("click", goNext);
+    closeBtn.addEventListener("click", () => dialog.close());
+
+    // Click on the dark backdrop closes the popup
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    // Restore page scrolling however the popup was closed (X, Esc, backdrop)
+    dialog.addEventListener("close", () => {
+      document.documentElement.style.overflow = "";
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!dialog.open || viewer.hidden) return;
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    });
+
+    // Swipe on touch screens
+    let touchStartX = 0;
+    stage.addEventListener(
+      "touchstart",
+      (e) => {
+        touchStartX = e.touches[0].clientX;
+      },
+      { passive: true },
+    );
+    stage.addEventListener(
+      "touchend",
+      (e) => {
+        const deltaX = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(deltaX) > 50) {
+          deltaX < 0 ? goNext() : goPrev();
+        }
+      },
+      { passive: true },
+    );
+  </script>
 </BaseLayout>
 
 <style>
@@ -231,20 +565,20 @@ const testimonials = [
     text-align: center;
   }
   .feature__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 12px;
-  border-radius: 50%;
-  background: var(--color-bg-alt);
-  color: var(--color-dark);
-}
-.feature__icon svg {
-  width: 18px;
-  height: 18px;
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;      
+    height: 46px;     
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: var(--color-bg-alt);
+    color: var(--color-dark);
+  }
+  .feature__icon svg {
+    width: 16px;      /* was 18px */
+    height: 16px;     /* was 18px */
+  }
   .feature h4 {
     font-family: var(--font-sans);
     font-size: 0.85rem;
@@ -446,6 +780,333 @@ const testimonials = [
     }
     .community__grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+
+<style is:global>
+  /* =====================================================
+     GALLERY  (all class names prefixed gx- so nothing
+     else in the site can override them)
+     ===================================================== */
+
+  /* ---- Thumbnails (page preview + popup grid) ---- */
+  .gx-thumb {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 1 / 1;
+    background: var(--color-bg-alt, #fdf3ef);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .gx-thumb:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  }
+  .gx-thumb:focus-visible {
+    outline: 3px solid var(--color-pink, #e8737d);
+    outline-offset: 2px;
+  }
+  .gx-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  /* ---- Preview on the page ---- */
+  .gx-preview {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .gx-cta {
+    text-align: center;
+    margin-top: 36px;
+  }
+
+  /* ---- The one popup window ---- */
+  .gx-dialog {
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    width: min(980px, 94vw);
+    max-width: none;
+    height: min(86vh, 780px);
+    max-height: none;
+    background: var(--color-bg, #fbf3ee);
+    color: var(--color-dark, #1f3a36);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  }
+  .gx-dialog[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .gx-dialog::backdrop {
+    background: rgba(20, 15, 15, 0.72);
+    backdrop-filter: blur(3px);
+  }
+  .gx-dialog [hidden] {
+    display: none !important;
+  }
+
+  /* Header */
+  .gx-dialog__header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--color-bg-alt, #fdf3ef);
+    border-bottom: 1px solid var(--color-border, #eadfd8);
+  }
+  .gx-dialog__title {
+    flex: 1;
+    font-family: var(--font-display, serif);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-dark, #1f3a36);
+  }
+  .gx-counter {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--color-text-soft, #6b6b6b);
+  }
+  .gx-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 16px 8px 12px;
+    border: 1px solid var(--color-border, #eadfd8);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-dark, #1f3a36);
+    font-family: var(--font-sans, inherit);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .gx-back:hover {
+    background: var(--color-bg, #fbf3ee);
+  }
+  .gx-close {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--color-dark, #1f3a36);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease;
+  }
+  .gx-close:hover {
+    transform: scale(1.08);
+  }
+  .gx-back:focus-visible,
+  .gx-close:focus-visible,
+  .gx-nav:focus-visible {
+    outline: 3px solid var(--color-pink, #e8737d);
+    outline-offset: 2px;
+  }
+
+  /* View 1: grid of all photos (scrolls inside the popup) */
+  .gx-all {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    align-content: start;
+    gap: 14px;
+    padding: 22px 24px 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* View 2: single photo */
+  .gx-viewer {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg, #fbf3ee);
+  }
+  /* Soft blurred copy of the current photo behind it, so the colours follow the picture */
+  .gx-viewer__bg {
+    position: absolute;
+    inset: -60px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) saturate(1.3);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .gx-stage {
+    --gx-pad-x: 84px;
+    --gx-pad-y: 22px;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .gx-stage__frame {
+    position: absolute;
+    top: var(--gx-pad-y);
+    bottom: var(--gx-pad-y);
+    left: var(--gx-pad-x);
+    right: var(--gx-pad-x);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gx-dialog .gx-stage__img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(60, 30, 30, 0.22);
+  }
+  .gx-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    color: #2c2c2c;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(60, 30, 30, 0.22);
+    transform: translateY(-50%);
+    transition:
+      background 0.15s ease,
+      transform 0.15s ease;
+  }
+  .gx-nav:hover {
+    background: #fff;
+    transform: translateY(-50%) scale(1.08);
+  }
+  .gx-nav--prev {
+    left: 18px;
+  }
+  .gx-nav--next {
+    right: 18px;
+  }
+  .gx-viewer__footer {
+    flex: 0 0 auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 4px 16px 20px;
+  }
+
+  /* ---- Tablet ---- */
+  @media (max-width: 900px) {
+    .gx-preview {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+  }
+
+  /* ---- Phones: full-screen popup ---- */
+  @media (max-width: 640px) {
+    .gx-preview {
+      gap: 10px;
+    }
+
+    .gx-dialog {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      border-radius: 0;
+    }
+    .gx-dialog__header {
+      padding: 12px 14px;
+    }
+    .gx-all {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 14px 14px 24px;
+    }
+    .gx-stage {
+      --gx-pad-x: 10px;
+      --gx-pad-y: 12px;
+    }
+    .gx-dialog .gx-stage__img {
+      border-radius: 12px;
+    }
+    .gx-nav {
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+    .gx-nav--prev {
+      left: 10px;
+    }
+    .gx-nav--next {
+      right: 10px;
+    }
+  }
+
+  /* ---- Very small phones: only 4 photos on the page (2 x 2) ---- */
+  @media (max-width: 400px) {
+    .gx-preview {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .gx-thumb--extra {
+      display: none;
+    }
+    .gx-all {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* When there are 6 photos or fewer, "See all" is only needed on the 4-photo screens */
+  @media (min-width: 401px) {
+    .gx-cta--small-screens-only {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gx-thumb,
+    .gx-nav,
+    .gx-close {
+      transition: none;
     }
   }
 </style>

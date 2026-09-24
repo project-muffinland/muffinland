@@ -36,3 +36,27 @@ export async function getMuffinBySlug(slug: string) {
     }
   `, { slug });
 }
+
+export async function getHomepage() {
+  return await sanityClient.fetch(`
+    *[_type == "homepage"][0]{
+      bestSellers[]{
+        "muffinTitle": muffin->title,
+        "muffinSlug": muffin->slug.current,
+        "muffinImageUrl": muffin->mainImage.asset->url,
+        "fillingName": featuredFilling->name,
+        "fillingExtraPrice": featuredFilling->extraPrice
+      },
+      "heroImageUrl": heroImage.asset->url,
+      "heroImageAlt": heroImage.alt,
+      "storyImageUrl": storyImage.asset->url,
+      "storyImageAlt": storyImage.alt,
+      gallery[]{
+        "imageUrl": image.asset->url,
+        "alt": alt,
+        "muffinSlug": linkedMuffin->slug.current,
+        "muffinTitle": linkedMuffin->title
+      }
+    }
+  `);
+}
