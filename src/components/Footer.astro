@@ -222,6 +222,13 @@ const careLinks = ["Свържете се с нас", "Доставка", "Вр�
   }
 
   @media (max-width: 900px) {
+    .logo__word {
+      /* On narrow viewports the flex row has less space to work with, and
+         width: 100% (needed for the desktop layout) makes the browser's
+         flex-shrink math push "land" away from "muffin". Let it size to
+         its content instead so the two words sit close together. */
+      width: auto;
+    }
     .footer__grid {
       grid-template-columns: 1fr 1fr;
     }
@@ -248,16 +255,47 @@ const careLinks = ["Свържете се с нас", "Доставка", "Вр�
   }
 
   @media (max-width: 480px) {
+    .footer {
+      padding-top: 36px;
+    }
     .footer__grid {
-      grid-template-columns: 1fr;
-      gap: 28px;
+      /* Was 1 column, which stacked brand + 3 nav lists + social into one
+         very long column. Keeping 2 columns here shortens the footer a
+         lot while still fitting comfortably on a phone screen. */
+      grid-template-columns: 1fr 1fr;
+      gap: 24px 20px;
+      padding-bottom: 32px;
+    }
+    .footer__brand,
+    .footer__social {
+      grid-column: 1 / -1;
       text-align: center;
+    }
+    .footer__brand .logo {
+      /* .logo is a flex container, so the text-align: center above only
+         centers the tagline paragraph below it, not the logo itself.
+         Center the flex row directly. */
+      justify-content: center;
+    }
+    .footer__grid nav {
+      /* Each nav column stretches full-width by default, which pins its
+         (left-aligned) text to the left edge of the column and leaves
+         empty space on the right. Shrink the block to its own content
+         and center that block in the column instead — text inside it
+         stays left-aligned. */
+      width: fit-content;
+      margin: 0 auto;
+    }
+    .footer__grid nav:nth-of-type(3) {
+      /* "Обслужване на клиенти" is alone on its row; span both columns
+         so it centers across the full row instead of just the left half. */
+      grid-column: 1 / -1;
     }
     .social__icons {
       justify-content: center;
     }
     .footer ul {
-      align-items: center;
+      align-items: flex-start;
     }
   }
 </style>
