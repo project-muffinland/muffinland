@@ -16,7 +16,7 @@ export default {
     },
     {
       name: 'allergens',
-      title: 'Алергени (Allergens)',
+      title: 'Алергенииииии (Allergens)',
       description: 'Изберете алергените, които се съдържат в този пълнеж.',
       type: 'array',
       of: [{ type: 'string' }],
