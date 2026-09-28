@@ -1,8 +1,9 @@
 import { createClient } from '@sanity/client';
+import { SANITY_PROJECT_ID, SANITY_DATASET } from 'astro:env/server';
 
 export const sanityClient = createClient({
-  projectId: 'jfsf87io',
-  dataset: 'production',
+  projectId: SANITY_PROJECT_ID,
+  dataset: SANITY_DATASET,
   useCdn: true,
   apiVersion: '2024-01-01',
 });

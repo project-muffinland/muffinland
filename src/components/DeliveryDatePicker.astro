@@ -1,0 +1,147 @@
+---
+// Vanilla-JS calendar. Talks to /api/delivery-dates; the server decides min/max/unavailable.
+---
+
+<div class="dp" id="delivery-picker">
+  <label class="dp-label">Дата на доставка</label>
+  <input type="hidden" name="Дата на доставка" id="delivery-date-input" />
+
+  <div class="dp-head">
+    <button type="button" class="dp-nav" id="dp-prev" aria-label="Предишен месец">‹</button>
+    <span class="dp-title" id="dp-title" aria-live="polite"></span>
+    <button type="button" class="dp-nav" id="dp-next" aria-label="Следващ месец">›</button>
+  </div>
+
+  <div class="dp-dow" aria-hidden="true">
+    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+  </div>
+  <div class="dp-grid" id="dp-grid"></div>
+
+  <p class="dp-selected" id="dp-selected"></p>
+  <p class="dp-msg" id="dp-msg" role="alert"></p>
+  <p class="dp-hint">Доставка е възможна от 3 до 90 дни напред. Сивите дати не са свободни.</p>
+</div>
+
+<script>
+  const MONTHS = ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"];
+
+  const root = document.getElementById("delivery-picker")!;
+  const input = document.getElementById("delivery-date-input") as HTMLInputElement;
+  const grid = document.getElementById("dp-grid")!;
+  const title = document.getElementById("dp-title")!;
+  const prev = document.getElementById("dp-prev") as HTMLButtonElement;
+  const next = document.getElementById("dp-next") as HTMLButtonElement;
+  const selectedEl = document.getElementById("dp-selected")!;
+  const msg = document.getElementById("dp-msg")!;
+
+  let min = "", max = "";
+  let unavailable = new Set<string>();
+  let view = { y: 0, m: 0 }; // m: 0-11
+  let selected = "";
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+  const ym = (s: string) => ({ y: +s.slice(0, 4), m: +s.slice(5, 7) - 1 });
+  const isSelectable = (d: string) => d >= min && d <= max && !unavailable.has(d);
+  const fmt = (s: string) => `${+s.slice(8, 10)} ${MONTHS[+s.slice(5, 7) - 1].toLowerCase()} ${s.slice(0, 4)}`;
+
+  function setSelected(d: string) {
+    selected = d;
+    input.value = d;
+    selectedEl.textContent = d ? `Избрана дата: ${fmt(d)}` : "";
+    if (d) msg.textContent = "";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function render() {
+    title.textContent = `${MONTHS[view.m]} ${view.y}`;
+    const first = new Date(Date.UTC(view.y, view.m, 1));
+    const offset = (first.getUTCDay() + 6) % 7; // Monday-first
+    const days = new Date(Date.UTC(view.y, view.m + 1, 0)).getUTCDate();
+
+    let html = "";
+    for (let i = 0; i < offset; i++) html += `<span class="dp-cell dp-empty"></span>`;
+    for (let d = 1; d <= days; d++) {
+      const date = iso(view.y, view.m, d);
+      const ok = isSelectable(date);
+      const cls = ["dp-cell", "dp-day", ok ? "" : "dp-off", date === selected ? "dp-sel" : ""].join(" ");
+      html += `<button type="button" class="${cls}" data-date="${date}" ${ok ? "" : "disabled"} aria-pressed="${date === selected}" aria-label="${fmt(date)}${ok ? "" : " – неналична"}">${d}</button>`;
+    }
+    grid.innerHTML = html;
+
+    const lo = ym(min), hi = ym(max);
+    prev.disabled = view.y * 12 + view.m <= lo.y * 12 + lo.m;
+    next.disabled = view.y * 12 + view.m >= hi.y * 12 + hi.m;
+  }
+
+  async function load() {
+    msg.textContent = "Зареждане на свободните дати...";
+    try {
+      const res = await fetch("/api/delivery-dates", { cache: "no-store" });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      min = data.min; max = data.max; unavailable = new Set(data.unavailable);
+      if (selected && !isSelectable(selected)) setSelected("");
+      view = ym(selected || min);
+      msg.textContent = "";
+      render();
+    } catch {
+      setSelected("");
+      grid.innerHTML = "";
+      msg.textContent = "Не успяхме да заредим календара. Моля опреснете страницата.";
+    }
+  }
+
+  grid.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest("button.dp-day") as HTMLButtonElement | null;
+    if (!btn || btn.disabled) return;
+    setSelected(btn.dataset.date!);
+    render();
+  });
+  prev.addEventListener("click", () => { view = view.m === 0 ? { y: view.y - 1, m: 11 } : { y: view.y, m: view.m - 1 }; render(); });
+  next.addEventListener("click", () => { view = view.m === 11 ? { y: view.y + 1, m: 0 } : { y: view.y, m: view.m + 1 }; render(); });
+
+  // Fired by the checkout when the server says the date was just taken
+  window.addEventListener("delivery-dates-refresh", () => { setSelected(""); load(); });
+  // Fired by the checkout when the user submits without picking a date
+  window.addEventListener("delivery-date-invalid", () => {
+    msg.textContent = "Моля изберете дата за доставка.";
+    root.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  load();
+</script>
+
+<style is:global>
+  .dp { margin-top: 20px; font-family: var(--font-sans); }
+  .dp-label {
+    display: block; font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.05em; font-weight: 600; margin-bottom: 8px;
+  }
+  .dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .dp-title { font-family: var(--font-display); font-size: 1.1rem; }
+  .dp-nav {
+    width: 34px; height: 34px; border: 1px solid var(--color-border); border-radius: 8px;
+    background: #fff; color: var(--color-dark); font-size: 1.2rem; line-height: 1; cursor: pointer;
+  }
+  .dp-nav:hover:not(:disabled) { background: var(--color-bg-alt); border-color: var(--color-pink); }
+  .dp-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+  .dp-dow, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .dp-dow span { text-align: center; font-size: 0.72rem; color: var(--color-text-soft); padding: 4px 0; }
+  .dp-cell { aspect-ratio: 1; }
+  .dp-day {
+    border: 1px solid var(--color-border); border-radius: 8px; background: #fff;
+    color: var(--color-dark); font: inherit; font-size: 0.9rem; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .dp-day:hover:not(:disabled) { border-color: var(--color-pink); background: var(--color-bg-alt); }
+  .dp-day:focus-visible, .dp-nav:focus-visible { outline: 2px solid var(--color-pink); outline-offset: 2px; }
+  .dp-day.dp-off {
+    background: #f1f1f1; color: #b5b5b5; border-color: transparent;
+    cursor: not-allowed; text-decoration: line-through;
+  }
+  .dp-day.dp-sel, .dp-day.dp-sel:hover { background: var(--color-pink); border-color: var(--color-pink); color: #fff; font-weight: 700; }
+  .dp-selected { margin: 12px 0 0; font-size: 0.9rem; font-weight: 600; min-height: 1.2em; }
+  .dp-msg { margin: 6px 0 0; font-size: 0.85rem; color: #c0392b; min-height: 1.2em; }
+  .dp-hint { margin: 4px 0 0; font-size: 0.78rem; color: var(--color-text-soft); }
+</style>

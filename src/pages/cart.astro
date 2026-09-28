@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
 ---
 
 <BaseLayout title="Количка | Muffinland">
@@ -59,6 +60,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
                 <label>Допълнителна забележка</label>
                 <textarea name="notes" placeholder="Ако имате специални изисквания..." rows="3"></textarea>
               </div>
+
+              <!-- Избор на дата за доставка -->
+              <DeliveryDatePicker />
             </div>
 
             <!-- Секция 3: Общо и потвърждение -->
@@ -206,36 +210,78 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   renderCart();
 
+  const dateInput = document.getElementById("delivery-date-input") as HTMLInputElement | null;
+
+  // Rolls the date back if the order could not be sent
+  async function releaseDate(date: string, releaseToken: string) {
+    try {
+      await fetch("/api/release-date", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, releaseToken }),
+        keepalive: true,
+      });
+    } catch {}
+  }
+
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const formData = new FormData(form);
       const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const resetBtn = () => {
+        submitBtn.textContent = "Завърши поръчката";
+        submitBtn.disabled = false;
+      };
+
+      const date = dateInput?.value || "";
+      if (!date) {
+        window.dispatchEvent(new Event("delivery-date-invalid"));
+        return;
+      }
+
       submitBtn.textContent = "Изпращане...";
       submitBtn.disabled = true;
 
+      // 1) Reserve the date (atomic on the server)
+      let releaseToken = "";
+      try {
+        const res = await fetch("/api/book-date", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date }),
+        });
+        if (res.status === 409 || res.status === 422) {
+          alert("Тази дата току-що беше заета. Моля изберете друга.");
+          window.dispatchEvent(new Event("delivery-dates-refresh"));
+          resetBtn();
+          return;
+        }
+        if (!res.ok) throw new Error("reserve failed");
+        releaseToken = (await res.json()).releaseToken;
+      } catch {
+        alert("Възникна грешка. Моля опитайте отново.");
+        resetBtn();
+        return;
+      }
+
+      // 2) Send the order (Web3Forms); free the date again if this fails
       try {
         const response = await fetch("https://api.web3forms.com/submit", {
           method: "POST",
-          body: formData
+          body: new FormData(form),
         });
-
-        if (response.ok) {
-          localStorage.removeItem("muffinCart");
-          window.dispatchEvent(new Event("cart-updated"));
-          if (checkoutState) checkoutState.style.display = "none";
-          if (successState) successState.style.display = "block";
-        } else {
-          alert("Възникна грешка. Моля опитайте отново.");
-          submitBtn.textContent = "Завърши поръчката";
-          submitBtn.disabled = false;
-        }
-      } catch (err) {
-        localStorage.removeItem("muffinCart");
-        window.dispatchEvent(new Event("cart-updated"));
-        if (checkoutState) checkoutState.style.display = "none";
-        if (successState) successState.style.display = "block";
+        if (!response.ok) throw new Error("web3forms failed");
+      } catch {
+        await releaseDate(date, releaseToken);
+        alert("Възникна грешка. Моля опитайте отново.");
+        resetBtn();
+        return;
       }
+
+      localStorage.removeItem("muffinCart");
+      window.dispatchEvent(new Event("cart-updated"));
+      if (checkoutState) checkoutState.style.display = "none";
+      if (successState) successState.style.display = "block";
     });
   }
 </script>
