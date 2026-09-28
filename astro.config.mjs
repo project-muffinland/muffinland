@@ -4,8 +4,8 @@ import sanity from '@sanity/astro';
 
 import cloudflare from '@astrojs/cloudflare';
 
-// https://astro.build/config
 export default defineConfig({
+  output: 'server',
   integrations: [
     sanity({
       projectId: 'jfsf87io',
