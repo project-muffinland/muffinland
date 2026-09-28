@@ -9,9 +9,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "generate-types": "wrangler types"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.3.3",
     "@sanity/astro": "^3.5.1",
     "@sanity/client": "^8.6.2",
     "astro": "^7.3.3",
@@ -19,7 +21,8 @@
     "react-dom": "^19.3.0",
     "react-is": "^19.3.0",
     "sanity": "^6.15.0",
-    "styled-components": "^6.5.3"
+    "styled-components": "^6.5.3",
+    "wrangler": "^4.143.0"
   },
   "allowScripts": {
     "esbuild": true

@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 import sanity from '@sanity/astro';
 
+import cloudflare from '@astrojs/cloudflare';
+
 // https://astro.build/config
 export default defineConfig({
   integrations: [
@@ -11,5 +13,7 @@ export default defineConfig({
       useCdn: false,
       apiVersion: '2024-03-21', 
     })
-  ]
+  ],
+
+  adapter: cloudflare()
 });
