@@ -13,7 +13,7 @@ export default defineConfig({
   adapter: cloudflare(),
   env: {
     schema: {
-      SANITY_PROJECT_ID: envField.string({ context: 'server', access: 'public' }),
+      SANITY_PROJECT_ID: envField.string({ context: 'server', access: 'public', default: 'jfsf87io' }),
       SANITY_DATASET: envField.string({ context: 'server', access: 'public', default: 'production' }),
       SANITY_WRITE_TOKEN: envField.string({ context: 'server', access: 'secret' }),
     },
