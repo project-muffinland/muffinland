@@ -46,7 +46,7 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
 
               <div class="field">
                 <label>Две имена</label>
-                <input type="text" name="name" placeholder="Иван Иванов" required />
+                <input type="text" name="name" placeholder="Николай Иванов" required />
               </div>
               <div class="field">
                 <label>Адрес за доставка</label>
@@ -54,7 +54,11 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
               </div>
               <div class="field">
                 <label>Телефонен номер</label>
-                <input type="tel" name="phone" placeholder="0888 123 456" required />
+                <input type="tel" name="phone" placeholder="0888 123 456" autocomplete="tel" inputmode="tel" required />
+              </div>
+              <div class="field">
+                <label>Имейл адрес</label>
+                <input type="email" name="email" placeholder="example@domain.bg" autocomplete="email" required />
               </div>
               <div class="field">
                 <label>Допълнителна забележка</label>
@@ -99,6 +103,8 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
 </BaseLayout>
 
 <script>
+  import { isValidBgPhone, isValidEmail, PHONE_ERROR, EMAIL_ERROR } from "../lib/validation";
+
   const cartContainer = document.getElementById("cart-items-container");
   const cartTotalEl = document.getElementById("cart-total");
   const cartSubtotalEl = document.getElementById("cart-subtotal");
@@ -224,6 +230,28 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
     } catch {}
   }
 
+  const phoneInput = form?.elements.namedItem("phone") as HTMLInputElement | null;
+  const emailInput = form?.elements.namedItem("email") as HTMLInputElement | null;
+
+  // Native browser bubble shows these messages; empty string = valid
+  function checkPhone() {
+    if (!phoneInput) return true;
+    phoneInput.setCustomValidity(phoneInput.value && !isValidBgPhone(phoneInput.value) ? PHONE_ERROR : "");
+    return phoneInput.checkValidity();
+  }
+  function checkEmail() {
+    if (!emailInput) return true;
+    emailInput.setCustomValidity(emailInput.value && !isValidEmail(emailInput.value) ? EMAIL_ERROR : "");
+    return emailInput.checkValidity();
+  }
+  // Clear stale "whitespace only" errors as soon as the user edits the field
+  ["name", "address"].forEach((n) => {
+    const el = form?.elements.namedItem(n) as HTMLInputElement | null;
+    el?.addEventListener("input", () => el.setCustomValidity(""));
+  });
+  phoneInput?.addEventListener("input", checkPhone);
+  emailInput?.addEventListener("input", checkEmail);
+
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -233,11 +261,44 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
         submitBtn.disabled = false;
       };
 
+      // Custom validity + trimmed required checks (whitespace-only isn't valid)
+      const field = (n: string) => (form.elements.namedItem(n) as HTMLInputElement | HTMLTextAreaElement).value.trim();
+      const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+      const addressInput = form.elements.namedItem("address") as HTMLInputElement;
+      nameInput.setCustomValidity(field("name") ? "" : "Моля въведете имена.");
+      addressInput.setCustomValidity(field("address") ? "" : "Моля въведете адрес.");
+      if (!checkPhone() || !checkEmail() || !nameInput.checkValidity() || !addressInput.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
       const date = dateInput?.value || "";
       if (!date) {
         window.dispatchEvent(new Event("delivery-date-invalid"));
         return;
       }
+
+      const cart = JSON.parse(localStorage.getItem("muffinCart") || "[]");
+      const items = cart.map((item: any) => ({
+        title: item.title,
+        boxCount: Number(item.boxCount),
+        fillingName: item.fillingName,
+        quantity: Number(item.quantity),
+        linePrice: Math.round(Number(item.totalPrice) * Number(item.quantity) * 100) / 100,
+        isPackaged: !!item.isPackaged,
+        allergens: item.allergens || "",
+      }));
+      const totalPrice = Math.round(items.reduce((s: number, i: any) => s + i.linePrice, 0) * 100) / 100;
+      const payload = {
+        customerName: field("name"),
+        address: field("address"),
+        phone: field("phone"),
+        email: field("email"),
+        notes: field("notes"),
+        deliveryDate: date,
+        items,
+        totalPrice,
+      };
 
       submitBtn.textContent = "Изпращане...";
       submitBtn.disabled = true;
@@ -264,19 +325,29 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
         return;
       }
 
-      // 2) Send the order (Web3Forms); free the date again if this fails
+      // 2) Save the order to Sanity; free the date again if this fails
       try {
-        const response = await fetch("https://api.web3forms.com/submit", {
+        const res = await fetch("/api/create-order", {
           method: "POST",
-          body: new FormData(form),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
-        if (!response.ok) throw new Error("web3forms failed");
-      } catch {
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          throw new Error(err?.error || "save failed");
+        }
+      } catch (err) {
         await releaseDate(date, releaseToken);
-        alert("Възникна грешка. Моля опитайте отново.");
+        alert((err as Error).message && (err as Error).message !== "save failed" ? (err as Error).message : "Възникна грешка. Моля опитайте отново.");
         resetBtn();
         return;
       }
+
+      // 3) Email notification (Web3Forms). The order is already saved,
+      //    so a failure here must not fail the checkout.
+      try {
+        await fetch("https://api.web3forms.com/submit", { method: "POST", body: new FormData(form) });
+      } catch {}
 
       localStorage.removeItem("muffinCart");
       window.dispatchEvent(new Event("cart-updated"));

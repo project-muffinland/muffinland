@@ -3,7 +3,7 @@ import {structureTool} from 'sanity/structure'
 import {visionTool} from '@sanity/vision'
 import {schemaTypes} from './schemaTypes'
 
-const CALENDAR_TYPES = ['blockedDate', 'bookedDate']
+const HIDDEN_FROM_DEFAULT_LIST = ['blockedDate', 'bookedDate', 'order']
 
 export default defineConfig({
   name: 'default',
@@ -18,6 +18,14 @@ export default defineConfig({
         S.list()
           .title('Content')
           .items([
+            S.listItem()
+              .title('Orders')
+              .schemaType('order')
+              .child(
+                S.documentTypeList('order')
+                  .title('Orders')
+                  .defaultOrdering([{field: 'createdAt', direction: 'desc'}]),
+              ),
             S.listItem()
               .title('Delivery calendar')
               .child(
@@ -47,7 +55,7 @@ export default defineConfig({
               ),
             S.divider(),
             ...S.documentTypeListItems().filter(
-              (item) => !CALENDAR_TYPES.includes(item.getId() as string),
+              (item) => !HIDDEN_FROM_DEFAULT_LIST.includes(item.getId() as string),
             ),
           ]),
     }),

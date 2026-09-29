@@ -5,8 +5,10 @@ import galleryImage from './galleryImage';
 import homepage from './homepage';
 import blockedDate from './blockedDate'
 import bookedDate from './bookedDate'
+import order from './order'
 
-export const schemaTypes = [muffinType, fillingType, featuredMuffin, galleryImage, homepage,blockedDate, bookedDate];
+
+export const schemaTypes = [muffinType, fillingType, featuredMuffin, galleryImage, homepage,blockedDate, bookedDate, order];
 
 
 
