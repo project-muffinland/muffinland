@@ -15,6 +15,6 @@
 	},
 	"vars": {
 		"SANITY_PROJECT_ID": "jfsf87io",
-		"SANITY_DATASET": "dev"
+		"SANITY_DATASET": "production"
 	}
 }
