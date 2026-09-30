@@ -9,6 +9,30 @@ export default {
       type: 'string', 
     },
     {
+      name: 'description',
+      title: 'Description (ingredients, etc.)',
+      description: 'Показва се на страницата, когато клиентът избере този пълнеж. Можеш да правиш текст удебелен, курсив, подчертан и да добавяш списъци.',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{ title: 'Normal', value: 'normal' }],
+          lists: [
+            { title: 'Bullet list', value: 'bullet' },
+            { title: 'Numbered list', value: 'number' },
+          ],
+          marks: {
+            decorators: [
+              { title: 'Bold', value: 'strong' },
+              { title: 'Italic', value: 'em' },
+              { title: 'Underline', value: 'underline' },
+            ],
+            annotations: [],
+          },
+        },
+      ],
+    },
+    {
       name: 'extraPrice',
       title: 'Extra Cost per Muffin',
       type: 'number',

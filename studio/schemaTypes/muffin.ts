@@ -57,7 +57,7 @@ export default {
     },
     {
       name: 'individualPackagingFee',
-      title: 'Extra Fee for Individual Packaging per Box',
+      title: 'Extra Fee for Individual Packaging per Muffin',
       type: 'number',
       initialValue: 2.00 // e.g., $2.00 extra for wrapping each individually
     }

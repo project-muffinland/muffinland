@@ -33,7 +33,7 @@ export async function getMuffinBySlug(slug: string) {
       },
       allowIndividualPackaging,
       individualPackagingFee,
-      "availableFillings": availableFillings[]->{ name, extraPrice, allergens }
+      "availableFillings": availableFillings[]->{ name, extraPrice, allergens, description }
     }
   `, { slug });
 }
@@ -60,4 +60,67 @@ export async function getHomepage() {
       }
     }
   `);
+}
+
+// ---- Подреди си сам (muffin sets) ----
+export async function getAllMuffinSets() {
+  return await sanityClient.fetch(`
+    *[_type == "muffinSet"] | order(order asc, title asc) {
+      title,
+      "slug": slug.current,
+      baseDescription,
+      "mainImageUrl": mainImage.asset->url,
+      "muffins": muffins[]{
+        "id": _key,
+        title,
+        description,
+        "imageUrl": image.asset->url
+      }
+    }
+  `);
+}
+
+export async function getMuffinSetBySlug(slug: string) {
+  return await sanityClient.fetch(`
+    *[_type == "muffinSet" && slug.current == $slug][0]{
+      title,
+      "slug": slug.current,
+      baseDescription,
+      "mainImageUrl": mainImage.asset->url,
+      "muffins": muffins[]{
+        "id": _key,
+        title,
+        description,
+        "imageUrl": image.asset->url
+      },
+      "availableFillings": availableFillings[]->{ name, extraPrice, allergens, description },
+      "boxOptions": boxOptions[]{
+        count,
+        price,
+        "imageUrl": boxImage.asset->url
+      } | order(count asc),
+      allowIndividualPackaging,
+      individualPackagingFee
+    }
+  `, { slug });
+}
+
+// Flat list of every muffin from every set, each with its set's slug + title.
+// For a future general gallery: click a muffin -> link to `/podredi-si-sam/${m.setSlug}`.
+export async function getAllSetMuffins() {
+  const sets = await sanityClient.fetch(`
+    *[_type == "muffinSet"] | order(order asc, title asc) {
+      "setSlug": slug.current,
+      "setTitle": title,
+      "muffins": muffins[]{
+        "id": _key,
+        title,
+        description,
+        "imageUrl": image.asset->url
+      }
+    }
+  `);
+  return sets.flatMap((s: any) =>
+    (s.muffins || []).map((m: any) => ({ ...m, setSlug: s.setSlug, setTitle: s.setTitle }))
+  );
 }

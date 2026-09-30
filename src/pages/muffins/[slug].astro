@@ -1,11 +1,22 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getMuffinBySlug, getAllMuffins } from "../../lib/sanity";
+import { toHTML } from "@portabletext/to-html";
 
 export async function getStaticPaths() {
   const muffins = await getAllMuffins();
   return muffins.map((m) => ({ params: { slug: m.slug } }));
 }
+
+// Описание на пълнежа (rich text от Sanity) -> безопасен HTML. Стар обикновен текст също работи.
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const descriptionToHtml = (d: any) => {
+  if (Array.isArray(d)) return toHTML(d);
+  if (typeof d === "string" && d.trim())
+    return `<p>${escapeHtml(d.trim()).replace(/\n/g, "<br>")}</p>`;
+  return "";
+};
 
 const { slug } = Astro.params;
 const muffin = await getMuffinBySlug(slug);
@@ -27,8 +38,6 @@ const initialImage =
     <div class="wrap product__grid">
       <div class="product__media">
         <img id="muffin-image" src={initialImage} alt={muffin.title} />
-        <p class="product__desc-label">Описание: </p>
-        <p class="product__desc">{muffin.baseDescription}</p>
       </div>
 
       <div class="product__copy">
@@ -84,12 +93,18 @@ const initialImage =
                     value={f.name} 
                     data-price={f.extraPrice || 0}
                     data-allergens={f.allergens ? f.allergens.join(', ') : ''}
+                    data-description={descriptionToHtml(f.description)}
                   >
-                    {f.name} {f.extraPrice > 0 ? `(+€${f.extraPrice})` : ""}
+                    {f.name} {f.extraPrice > 0 ? `(+€${f.extraPrice}/бр.)` : ""}
                   </option>
                 ))
               }
             </select>
+            <!-- Описание на избрания пълнеж (сменя се динамично) -->
+            <div id="filling-desc" class="filling-desc" hidden>
+              <strong id="filling-desc-title" class="filling-desc__title"></strong>
+              <div id="filling-desc-text" class="filling-desc__text"></div>
+            </div>
             <!-- Контейнер за алергени (ще се показва само ако има такива) -->
             <div id="allergen-notice" style="display: none; margin-top: 6px; font-size: 0.8rem; color: var(--color-text-soft);">
               <span style="color: var(--color-pink); font-weight: 600;">⚠ Внимание:</span> Съдържа <span id="allergen-list"></span>
@@ -105,15 +120,23 @@ const initialImage =
                     id="separate-packaging"
                     data-fee={muffin.individualPackagingFee}
                   />
-                  Опаковай всеки мъфин отделно в кутията (+€
-                  {muffin.individualPackagingFee})
+                  Опаковай всеки мъфин отделно в кутията (+€{muffin.individualPackagingFee} на мъфин)
                 </label>
               </div>
             )
           }
 
+          <div class="total-line">
+            Общо: <strong id="total-display">€0</strong>
+          </div>
+
           <button type="submit" class="btn btn-solid submit-btn"
             >Добави в количката</button
+          >
+
+          <!-- Бутон към страницата "Подреди си сам" -->
+          <a href="/podredi-si-sam" class="btn btn-outline build-link"
+            >Подреди си сам</a
           >
         </form>
 
@@ -212,7 +235,8 @@ const initialImage =
     const packagingFee = isPackaged ? parseFloat(packagingCheckbox.getAttribute("data-fee") || "0") : 0;
 
     // Пресмятаме крайната цена за този артикул
-    const totalPrice = boxPrice + fillingPrice + packagingFee;
+    // Допълнителната цена на пълнежа и опаковката са "на мъфин" (както ги смята create-order.ts)
+    const totalPrice = boxPrice + (fillingPrice + packagingFee) * parseInt(boxCount, 10);
 
     const cartItem = {
       id: Date.now().toString(), // Уникално ID за триене
@@ -256,6 +280,52 @@ const initialImage =
     }
 
   });
+
+  // ---- Описание на избрания пълнеж (динамично) ----
+  const fillingDesc = document.getElementById("filling-desc") as HTMLElement | null;
+  const fillingDescTitle = document.getElementById("filling-desc-title") as HTMLElement | null;
+  const fillingDescText = document.getElementById("filling-desc-text") as HTMLElement | null;
+
+  function updateFillingDescription() {
+    if (!fillingSelect || !fillingDesc || !fillingDescTitle || !fillingDescText) return;
+    const opt = fillingSelect.options[fillingSelect.selectedIndex];
+    const html = (opt?.getAttribute("data-description") || "").trim();
+    // само етикети без текст (напр. празен параграф) = няма описание
+    if (!html.replace(/<[^>]*>/g, "").trim()) {
+      fillingDesc.hidden = true;
+      return;
+    }
+    fillingDescTitle.textContent = opt.value;
+    fillingDescText.innerHTML = html;
+    fillingDesc.hidden = false;
+    // малка анимация при смяна
+    fillingDesc.classList.remove("fade-in");
+    void fillingDesc.offsetWidth;
+    fillingDesc.classList.add("fade-in");
+  }
+  fillingSelect?.addEventListener("change", updateFillingDescription);
+  updateFillingDescription();
+
+  // ---- Показване на общата цена (кутия + пълнеж + опаковка, всичко на мъфин) ----
+  const totalDisplay = document.getElementById("total-display");
+  const packagingBox = document.getElementById("separate-packaging") as HTMLInputElement | null;
+
+  function updateTotal() {
+    if (!totalDisplay) return;
+    const boxPrice = parseFloat(priceInput.value || "0");
+    const count = parseInt(selectedInput.value || "0", 10);
+    const opt = fillingSelect?.options[fillingSelect.selectedIndex];
+    const fillingPrice = parseFloat(opt?.getAttribute("data-price") || "0");
+    const fee =
+      packagingBox && packagingBox.checked
+        ? parseFloat(packagingBox.getAttribute("data-fee") || "0")
+        : 0;
+    totalDisplay.textContent = `€${(boxPrice + (fillingPrice + fee) * count).toFixed(2)}`;
+  }
+  boxButtons.forEach((btn) => btn.addEventListener("click", updateTotal));
+  fillingSelect?.addEventListener("change", updateTotal);
+  packagingBox?.addEventListener("change", updateTotal);
+  updateTotal();
 </script>
 
 <style>
@@ -303,18 +373,6 @@ const initialImage =
     object-fit: cover;
     transition: opacity 0.2s ease-in-out;
   }
-  .product__desc-label {
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin: 18px 0 4px;
-  }
-  .product__desc {
-    color: var(--color-text-soft);
-    margin: 0;
-  }
-
   .product__copy h1 {
     font-size: 2.4rem;
     line-height: 1.1;
@@ -468,4 +526,85 @@ const initialImage =
     transform: translate(-50%, -50%) scale(1);
   }
 
+
+  /* --- Filling description card --- */
+  .filling-desc {
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-pink);
+    border-radius: 10px;
+  }
+  .filling-desc[hidden] {
+    display: none;
+  }
+  .filling-desc__title {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .filling-desc__text {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    overflow-wrap: anywhere;
+  }
+  /* съдържанието се вмъква динамично, затова :global */
+  .filling-desc__text :global(p) {
+    margin: 0 0 0.6em;
+  }
+  .filling-desc__text :global(p:last-child),
+  .filling-desc__text :global(ul:last-child),
+  .filling-desc__text :global(ol:last-child) {
+    margin-bottom: 0;
+  }
+  .filling-desc__text :global(ul),
+  .filling-desc__text :global(ol) {
+    margin: 0 0 0.6em;
+    padding-left: 1.3em;
+  }
+  .filling-desc__text :global(li) {
+    margin-bottom: 0.2em;
+  }
+  .filling-desc__text :global(strong) {
+    color: var(--color-dark);
+    font-weight: 700;
+  }
+  .filling-desc.fade-in {
+    animation: fillingFade 0.25s ease;
+  }
+  @keyframes fillingFade {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (max-width: 600px) {
+    .filling-desc {
+      padding: 12px 14px;
+    }
+    .filling-desc__text {
+      font-size: 0.88rem;
+    }
+  }
+
+  .total-line {
+    margin: 4px 0 12px;
+    font-size: 1.05rem;
+  }
+  .build-link {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    margin-top: 10px;
+  }
 </style>

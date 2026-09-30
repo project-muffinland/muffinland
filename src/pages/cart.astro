@@ -160,7 +160,7 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
                 <span class="serves-badge">Кутия от ${item.boxCount} бр.</span>
               </div>
               <ul class="ingredient-list">
-                <li>Пълнеж: ${item.fillingName}</li>${item.allergens ? `<li>Алергени: ${item.allergens}</li>` : ""}
+                <li>Пълнеж: ${item.fillingName}</li>${item.mix?.length ? `<li>Мъфини: ${item.mix.map((m: any) => `${m.qty}× ${m.name}`).join(", ")}</li>` : ""}${item.allergens ? `<li>Алергени: ${item.allergens}</li>` : ""}
                 ${item.isPackaged ? "<li>Индивидуална опаковка</li>" : ""}
               </ul>
             </div>
@@ -177,7 +177,7 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
         </div>
       `;
 
-      orderSummaryText += `${item.quantity}x ${item.title} (Кутия от ${item.boxCount}) | Пълнеж: ${item.fillingName} | Цена: €${linePrice.toFixed(2)}\n`;
+      orderSummaryText += `${item.quantity}x ${item.title} (Кутия от ${item.boxCount}) | Пълнеж: ${item.fillingName}${item.mix?.length ? " | Мъфини: " + item.mix.map((m: any) => `${m.qty}× ${m.name}`).join(", ") : ""} | Цена: €${linePrice.toFixed(2)}\n`;
     });
 
     if (cartContainer) cartContainer.innerHTML = html;
@@ -286,7 +286,7 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
         quantity: Number(item.quantity),
         linePrice: Math.round(Number(item.totalPrice) * Number(item.quantity) * 100) / 100,
         isPackaged: !!item.isPackaged,
-        allergens: item.allergens || "",
+        allergens: item.allergens || "", setSlug: item.setSlug || "", mix: Array.isArray(item.mix) ? item.mix : [],
       }));
       const totalPrice = Math.round(items.reduce((s: number, i: any) => s + i.linePrice, 0) * 100) / 100;
       const payload = {

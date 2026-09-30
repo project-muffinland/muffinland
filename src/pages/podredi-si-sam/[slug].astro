@@ -1,0 +1,864 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getMuffinSetBySlug, getAllMuffinSets } from "../../lib/sanity";
+import { toHTML } from "@portabletext/to-html";
+
+export async function getStaticPaths() {
+  const sets = await getAllMuffinSets();
+  return sets.map((s) => ({ params: { slug: s.slug } }));
+}
+
+// Filling description (rich text from Sanity) -> safe HTML. Old plain-text values still work.
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const descriptionToHtml = (d: any) => {
+  if (Array.isArray(d)) return toHTML(d);
+  if (typeof d === "string" && d.trim())
+    return `<p>${escapeHtml(d.trim()).replace(/\n/g, "<br>")}</p>`;
+  return "";
+};
+
+const { slug } = Astro.params;
+const set = await getMuffinSetBySlug(slug);
+
+const defaultBox =
+  set.boxOptions?.find((b: any) => b.count === 4) || set.boxOptions?.[0];
+
+const initialImage =
+  defaultBox?.imageUrl ||
+  set.mainImageUrl ||
+  "https://via.placeholder.com/400x300";
+---
+
+<BaseLayout>
+  <section class="product">
+    <div class="wrap product__grid">
+      <div class="product__media">
+        <img id="muffin-image" src={initialImage} alt={set.title} />
+      </div>
+
+      <div class="product__copy">
+        <span class="eyebrow">Muffin Land · Подреди си сам</span>
+        <h1>{set.title}</h1>
+
+        <form id="add-to-cart-form" class="order-form">
+          <input type="hidden" id="muffin-title" value={set.title} />
+          <input type="hidden" id="set-slug" value={set.slug} />
+          <input type="hidden" id="selected-box-input" value={defaultBox?.count || 4} />
+          <input type="hidden" id="selected-price-input" value={defaultBox?.price || 0} />
+          <input type="hidden" id="selected-image-input" value={initialImage} />
+
+          <div class="field">
+            <label>Избери размер кутия:</label>
+            <div class="box-buttons">
+              {
+                set.boxOptions?.map((box: any) => {
+                  const isDefault = box.count === (defaultBox?.count || 4);
+                  return (
+                    <button
+                      type="button"
+                      class={`box-btn ${isDefault ? "active" : ""}`}
+                      data-count={box.count}
+                      data-price={box.price}
+                      data-image={box.imageUrl || set.mainImageUrl}
+                    >
+                      <span class="box-btn-title">{box.count} бр.</span>
+                      <span class="box-btn-price">€{box.price}</span>
+                    </button>
+                  );
+                })
+              }
+            </div>
+          </div>
+
+          <!-- ПОДРЕДИ СИ САМ: избор на видове -->
+          <div class="field">
+            <label>
+              Избери мъфини:
+              <span class="mix-counter" id="mix-counter"></span>
+            </label>
+            <div class="mix-list">
+              {
+                set.muffins?.map((m: any) => (
+                  <div class="mix-row" data-id={m.id} data-name={m.title} data-qty="0">
+                    <button
+                      type="button"
+                      class="mix-row__img-btn"
+                      data-src={m.imageUrl || "https://via.placeholder.com/800x800"}
+                      data-title={m.title}
+                      data-desc={m.description || ""}
+                      aria-label={`Виж снимката: ${m.title}`}
+                    >
+                      <img
+                        class="mix-row__img"
+                        src={m.imageUrl || "https://via.placeholder.com/120"}
+                        alt={m.title}
+                      />
+                    </button>
+                    <div class="mix-row__info">
+                      <span class="mix-row__name">{m.title}</span>
+                      {m.description && (
+                        <span class="mix-row__desc">{m.description}</span>
+                      )}
+                    </div>
+                    <div class="stepper">
+                      <button type="button" class="stepper__btn minus" aria-label="Намали">−</button>
+                      <span class="stepper__qty">0</span>
+                      <button type="button" class="stepper__btn plus" aria-label="Увеличи">+</button>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+            <button type="button" id="mix-reset" class="mix-reset">Изчисти избора</button>
+          </div>
+
+          <div class="field">
+            <label for="filling">Избери пълнеж (за цялата кутия):</label>
+            <select id="filling" required>
+              {
+                set.availableFillings?.map((f: any) => (
+                  <option
+                    value={f.name}
+                    data-price={f.extraPrice || 0}
+                    data-allergens={f.allergens ? f.allergens.join(", ") : ""}
+                    data-description={descriptionToHtml(f.description)}
+                  >
+                    {f.name} {f.extraPrice > 0 ? `(+€${f.extraPrice}/бр.)` : ""}
+                  </option>
+                ))
+              }
+            </select>
+            <div id="filling-desc" class="filling-desc" hidden>
+              <strong id="filling-desc-title" class="filling-desc__title"></strong>
+              <div id="filling-desc-text" class="filling-desc__text"></div>
+            </div>
+            <div id="allergen-notice" style="display: none; margin-top: 6px; font-size: 0.8rem; color: var(--color-text-soft);">
+              <span style="color: var(--color-pink); font-weight: 600;">⚠ Внимание:</span> Съдържа <span id="allergen-list"></span>
+            </div>
+          </div>
+
+          {
+            set.allowIndividualPackaging && (
+              <div class="field">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="separate-packaging"
+                    data-fee={set.individualPackagingFee}
+                  />
+                  Опаковай всеки мъфин отделно в кутията (+€{set.individualPackagingFee} на мъфин)
+                </label>
+              </div>
+            )
+          }
+
+          <div class="total-line">
+            Общо: <strong id="total-display">€0</strong>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-solid submit-btn" disabled>
+            Добави в количката
+          </button>
+        </form>
+
+        <div id="toast" class="toast hidden">
+          <span id="toast-message"></span>
+        </div>
+
+        <a href="/podredi-si-sam" class="btn btn-outline back-link"
+          >&larr; Обратно към всички колекции</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- LIGHTBOX (снимки на мъфините) -->
+  <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Снимка на мъфин">
+    <button type="button" class="lightbox__close" id="lb-close" aria-label="Затвори">&times;</button>
+    <button type="button" class="lightbox__nav" id="lb-prev" aria-label="Предишна">&#8249;</button>
+    <figure class="lightbox__figure">
+      <img id="lb-img" src="" alt="" />
+      <figcaption>
+        <strong id="lb-title"></strong>
+        <span id="lb-desc"></span>
+      </figcaption>
+    </figure>
+    <button type="button" class="lightbox__nav" id="lb-next" aria-label="Следваща">&#8250;</button>
+  </div>
+</BaseLayout>
+
+<script>
+  const boxButtons = document.querySelectorAll(".box-btn");
+  const selectedInput = document.getElementById("selected-box-input") as HTMLInputElement;
+  const priceInput = document.getElementById("selected-price-input") as HTMLInputElement;
+  const imageInput = document.getElementById("selected-image-input") as HTMLInputElement;
+  const muffinImage = document.getElementById("muffin-image") as HTMLImageElement;
+  const form = document.getElementById("add-to-cart-form") as HTMLFormElement;
+  const submitBtn = document.getElementById("submit-btn") as HTMLButtonElement;
+
+  const toast = document.getElementById("toast");
+
+  const fillingSelect = document.getElementById("filling") as HTMLSelectElement;
+  const allergenNotice = document.getElementById("allergen-notice");
+  const allergenList = document.getElementById("allergen-list");
+  const packagingCheckbox = document.getElementById("separate-packaging") as HTMLInputElement | null;
+
+  const mixRows = Array.from(document.querySelectorAll<HTMLElement>(".mix-row"));
+  const mixCounter = document.getElementById("mix-counter");
+  const mixReset = document.getElementById("mix-reset");
+  const totalDisplay = document.getElementById("total-display");
+
+  const getQty = (row: HTMLElement) => parseInt(row.dataset.qty || "0", 10);
+  const boxCount = () => parseInt(selectedInput.value || "0", 10);
+  const totalChosen = () => mixRows.reduce((sum, r) => sum + getQty(r), 0);
+
+  function calcPrice() {
+    const boxPrice = parseFloat(priceInput.value || "0");
+    const opt = fillingSelect?.options[fillingSelect.selectedIndex];
+    const fillingPrice = parseFloat(opt?.getAttribute("data-price") || "0");
+    const fee =
+      packagingCheckbox && packagingCheckbox.checked
+        ? parseFloat(packagingCheckbox.getAttribute("data-fee") || "0")
+        : 0;
+    // filling extra AND packaging fee are both "per muffin"; the server prices them the same way
+    return boxPrice + (fillingPrice + fee) * boxCount();
+  }
+
+  function refresh() {
+    const total = totalChosen();
+    const count = boxCount();
+    const full = total === count;
+
+    mixRows.forEach((row) => {
+      const qty = getQty(row);
+      (row.querySelector(".stepper__qty") as HTMLElement).textContent = String(qty);
+      (row.querySelector(".minus") as HTMLButtonElement).disabled = qty === 0;
+      (row.querySelector(".plus") as HTMLButtonElement).disabled = total >= count;
+      row.classList.toggle("selected", qty > 0);
+    });
+
+    if (mixCounter) {
+      mixCounter.textContent = `${total} / ${count}`;
+      mixCounter.classList.toggle("done", full);
+    }
+    if (totalDisplay) totalDisplay.textContent = `€${calcPrice().toFixed(2)}`;
+    submitBtn.disabled = !full;
+    submitBtn.textContent = full
+      ? "Добави в количката"
+      : `Избери още ${count - total} бр.`;
+  }
+
+  mixRows.forEach((row) => {
+    row.querySelector(".plus")?.addEventListener("click", () => {
+      if (totalChosen() >= boxCount()) return;
+      row.dataset.qty = String(getQty(row) + 1);
+      refresh();
+    });
+    row.querySelector(".minus")?.addEventListener("click", () => {
+      if (getQty(row) === 0) return;
+      row.dataset.qty = String(getQty(row) - 1);
+      refresh();
+    });
+  });
+
+  function resetMix() {
+    mixRows.forEach((r) => (r.dataset.qty = "0"));
+    refresh();
+  }
+  mixReset?.addEventListener("click", resetMix);
+
+  function updateAllergens() {
+    if (!fillingSelect) return;
+    const selectedOption = fillingSelect.options[fillingSelect.selectedIndex];
+    const allergens = selectedOption?.getAttribute("data-allergens");
+
+    if (allergens && allergenNotice && allergenList) {
+      allergenList.textContent = allergens;
+      allergenNotice.style.display = "block";
+    } else if (allergenNotice) {
+      allergenNotice.style.display = "none";
+    }
+  }
+
+  fillingSelect?.addEventListener("change", () => {
+    updateAllergens();
+    refresh();
+  });
+  packagingCheckbox?.addEventListener("change", refresh);
+  updateAllergens();
+
+  // Размер на кутията
+  boxButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      boxButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const count = btn.getAttribute("data-count");
+      const price = btn.getAttribute("data-price");
+      const newImageUrl = btn.getAttribute("data-image");
+
+      if (count) selectedInput.value = count;
+      if (price) priceInput.value = price;
+      if (newImageUrl && imageInput) imageInput.value = newImageUrl;
+
+      if (newImageUrl && muffinImage) {
+        muffinImage.style.opacity = "0.3";
+        setTimeout(() => {
+          muffinImage.src = newImageUrl;
+          muffinImage.style.opacity = "1";
+        }, 150);
+      }
+
+      // Различна кутия = нов избор (иначе сборът може да надвишава кутията)
+      resetMix();
+    });
+  });
+
+  refresh();
+
+  // Добавяне в количката
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (totalChosen() !== boxCount()) return;
+
+    const title = (document.getElementById("muffin-title") as HTMLInputElement).value;
+    const imageUrl = imageInput.value;
+
+    const opt = fillingSelect.options[fillingSelect.selectedIndex];
+    const fillingName = opt.value;
+    const allergens = opt.getAttribute("data-allergens") || "";
+    const isPackaged = packagingCheckbox ? packagingCheckbox.checked : false;
+
+    const mix = mixRows
+      .filter((r) => getQty(r) > 0)
+      .map((r) => ({ id: r.dataset.id || "", name: r.dataset.name || "", qty: getQty(r) }));
+
+    const cartItem = {
+      id: Date.now().toString(),
+      title: `${title} (Подреди си сам)`,
+      imageUrl,
+      boxCount: String(boxCount()),
+      fillingName,
+      setSlug: (document.getElementById("set-slug") as HTMLInputElement).value,
+      mix, // [{ name, qty }] – показва се в количката и се валидира от create-order
+      isPackaged,
+      totalPrice: calcPrice(),
+      quantity: 1,
+      allergens,
+    };
+
+    const cart = JSON.parse(localStorage.getItem("muffinCart") || "[]");
+    cart.push(cartItem);
+    localStorage.setItem("muffinCart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cart-updated"));
+
+    if (toast) {
+      toast.innerHTML = `
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <div style="text-align: left; line-height: 1.3;">
+          <div style="font-family: var(--font-sans); font-weight: 600; font-size: 1.15rem; color: #fff;">${title}</div>
+          <div style="font-size: 0.9rem; font-family: var(--font-sans); color: #cfe0da; margin-top: 4px;">Успешно добавено в количката</div>
+        </div>
+      `;
+      toast.classList.remove("hidden");
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.add("hidden");
+      }, 3000);
+    }
+
+    resetMix();
+  });
+
+  // ---- Увеличаване на снимките на мъфините ----
+  const lbBox = document.getElementById("lightbox") as HTMLElement;
+  const lbImg = document.getElementById("lb-img") as HTMLImageElement;
+  const lbTitle = document.getElementById("lb-title") as HTMLElement;
+  const lbDesc = document.getElementById("lb-desc") as HTMLElement;
+  const lbPrev = document.getElementById("lb-prev") as HTMLButtonElement;
+  const lbNext = document.getElementById("lb-next") as HTMLButtonElement;
+  const lbCloseBtn = document.getElementById("lb-close") as HTMLButtonElement;
+  const lbThumbs = Array.from(document.querySelectorAll<HTMLButtonElement>(".mix-row__img-btn"));
+  let lbCurrent = 0;
+  let lbLastFocused: HTMLElement | null = null;
+
+  function lbShow(i: number) {
+    lbCurrent = (i + lbThumbs.length) % lbThumbs.length;
+    const b = lbThumbs[lbCurrent];
+    lbImg.src = b.dataset.src || "";
+    lbImg.alt = b.dataset.title || "";
+    lbTitle.textContent = b.dataset.title || "";
+    lbDesc.textContent = b.dataset.desc || "";
+    lbPrev.hidden = lbThumbs.length < 2;
+    lbNext.hidden = lbThumbs.length < 2;
+  }
+  function lbOpen(btn: HTMLButtonElement) {
+    lbLastFocused = btn;
+    lbShow(lbThumbs.indexOf(btn));
+    lbBox.hidden = false;
+    document.body.style.overflow = "hidden";
+    lbCloseBtn.focus();
+  }
+  function lbHide() {
+    lbBox.hidden = true;
+    document.body.style.overflow = "";
+    lbImg.src = "";
+    lbLastFocused?.focus();
+  }
+
+  lbThumbs.forEach((b) => b.addEventListener("click", () => lbOpen(b)));
+  lbCloseBtn.addEventListener("click", lbHide);
+  lbPrev.addEventListener("click", () => lbShow(lbCurrent - 1));
+  lbNext.addEventListener("click", () => lbShow(lbCurrent + 1));
+  lbBox.addEventListener("click", (e) => {
+    if (e.target === lbBox) lbHide();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (lbBox.hidden) return;
+    if (e.key === "Escape") lbHide();
+    if (e.key === "ArrowLeft") lbShow(lbCurrent - 1);
+    if (e.key === "ArrowRight") lbShow(lbCurrent + 1);
+  });
+
+  // ---- Описание на избрания пълнеж (динамично) ----
+  const fillingDesc = document.getElementById("filling-desc") as HTMLElement | null;
+  const fillingDescTitle = document.getElementById("filling-desc-title") as HTMLElement | null;
+  const fillingDescText = document.getElementById("filling-desc-text") as HTMLElement | null;
+
+  function updateFillingDescription() {
+    if (!fillingSelect || !fillingDesc || !fillingDescTitle || !fillingDescText) return;
+    const opt = fillingSelect.options[fillingSelect.selectedIndex];
+    const html = (opt?.getAttribute("data-description") || "").trim();
+    // само етикети без текст (напр. празен параграф) = няма описание
+    if (!html.replace(/<[^>]*>/g, "").trim()) {
+      fillingDesc.hidden = true;
+      return;
+    }
+    fillingDescTitle.textContent = opt.value;
+    fillingDescText.innerHTML = html;
+    fillingDesc.hidden = false;
+    // малка анимация при смяна
+    fillingDesc.classList.remove("fade-in");
+    void fillingDesc.offsetWidth;
+    fillingDesc.classList.add("fade-in");
+  }
+  fillingSelect?.addEventListener("change", updateFillingDescription);
+  updateFillingDescription();
+</script>
+
+<style>
+  .product {
+    padding: 64px 0 80px;
+  }
+  .product__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 48px;
+  }
+  .product__media img {
+    border-radius: 16px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .product__copy h1 {
+    font-size: 2.4rem;
+    line-height: 1.1;
+    margin: 6px 0 24px;
+  }
+
+  .field {
+    margin-bottom: 22px;
+  }
+  .field label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fff;
+    color: var(--color-dark);
+  }
+
+  .box-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .box-btn {
+    flex: 1;
+    min-width: 84px;
+    padding: 12px 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .box-btn:hover {
+    border-color: var(--color-pink);
+  }
+  .box-btn.active {
+    border-color: var(--color-pink);
+    background: #fff;
+    color: var(--color-pink);
+  }
+  .box-btn-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: block;
+  }
+  .box-btn-price {
+    font-size: 0.8rem;
+    color: var(--color-text-soft);
+    display: block;
+    margin-top: 3px;
+  }
+  .box-btn.active .box-btn-price {
+    color: var(--color-pink);
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+
+  /* --- Mix picker --- */
+  .mix-counter {
+    float: right;
+    font-weight: 600;
+    color: var(--color-text-soft);
+  }
+  .mix-counter.done {
+    color: var(--color-pink);
+  }
+  .mix-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mix-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px 8px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-bg-alt);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .mix-row.selected {
+    border-color: var(--color-pink);
+    background: #fff;
+  }
+  .mix-row__img {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .mix-row__info {
+    flex: 1;
+    min-width: 0;
+  }
+  .mix-row__name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .mix-row__desc {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-soft);
+    margin-top: 2px;
+  }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stepper__btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .stepper__btn:hover:not(:disabled) {
+    border-color: var(--color-pink);
+    color: var(--color-pink);
+  }
+  .stepper__btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .stepper__qty {
+    min-width: 22px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .mix-reset {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-soft);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .total-line {
+    margin: 4px 0 12px;
+    font-size: 1.05rem;
+  }
+
+  .submit-btn {
+    width: 100%;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .submit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .product__grid {
+      grid-template-columns: 1fr;
+    }
+    .product__copy h1 {
+      font-size: 2rem;
+    }
+  }
+
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-dark);
+    color: #fff;
+    padding: 24px 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 9999;
+    width: max-content;
+    min-width: 320px;
+    height: fit-content;
+    max-height: 120px;
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--color-pink);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* --- Zoomable muffin icons + lightbox --- */
+  .mix-row__img-btn {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    flex-shrink: 0;
+    border-radius: 10px;
+    line-height: 0;
+  }
+  .mix-row__img-btn:hover .mix-row__img,
+  .mix-row__img-btn:focus-visible .mix-row__img {
+    box-shadow: 0 0 0 2px var(--color-pink);
+  }
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+  }
+  .lightbox[hidden] {
+    display: none;
+  }
+  .lightbox__figure {
+    margin: 0;
+    max-width: min(90vw, 900px);
+    text-align: center;
+    color: #fff;
+  }
+  .lightbox__figure img {
+    max-width: 100%;
+    max-height: 78vh;
+    border-radius: 14px;
+    object-fit: contain;
+    background: #111;
+  }
+  .lightbox__figure figcaption {
+    margin-top: 12px;
+    font-family: var(--font-sans);
+  }
+  .lightbox__figure strong {
+    display: block;
+    font-size: 1.1rem;
+  }
+  .lightbox__figure span {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.9rem;
+    color: #cfcfcf;
+  }
+  .lightbox__close,
+  .lightbox__nav {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .lightbox__close:hover,
+  .lightbox__nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  .lightbox__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  .lightbox__nav[hidden] {
+    display: none;
+  }
+  @media (max-width: 600px) {
+    .lightbox {
+      padding: 12px;
+      gap: 6px;
+    }
+    .lightbox__nav {
+      width: 36px;
+      height: 36px;
+      font-size: 1.5rem;
+    }
+  }
+
+  /* --- Filling description card --- */
+  .filling-desc {
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-pink);
+    border-radius: 10px;
+  }
+  .filling-desc[hidden] {
+    display: none;
+  }
+  .filling-desc__title {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .filling-desc__text {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-text-soft);
+    overflow-wrap: anywhere;
+  }
+  /* съдържанието се вмъква динамично, затова :global */
+  .filling-desc__text :global(p) {
+    margin: 0 0 0.6em;
+  }
+  .filling-desc__text :global(p:last-child),
+  .filling-desc__text :global(ul:last-child),
+  .filling-desc__text :global(ol:last-child) {
+    margin-bottom: 0;
+  }
+  .filling-desc__text :global(ul),
+  .filling-desc__text :global(ol) {
+    margin: 0 0 0.6em;
+    padding-left: 1.3em;
+  }
+  .filling-desc__text :global(li) {
+    margin-bottom: 0.2em;
+  }
+  .filling-desc__text :global(strong) {
+    color: var(--color-dark);
+    font-weight: 700;
+  }
+  .filling-desc.fade-in {
+    animation: fillingFade 0.25s ease;
+  }
+  @keyframes fillingFade {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (max-width: 600px) {
+    .filling-desc {
+      padding: 12px 14px;
+    }
+    .filling-desc__text {
+      font-size: 0.88rem;
+    }
+  }
+</style>
