@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
+import FAQ from "../components/FAQ.astro";
 ---
 
 <BaseLayout title="Количка | Muffinland">
@@ -35,6 +36,9 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
             <div id="cart-items-container">
               <p class="cart-loading">Зареждане на количката...</p>
             </div>
+
+            <!-- FAQ: под продуктите, над общата сума (на мобилен е между количката и "Общо") -->
+            <FAQ compact eyebrow="Често задавани въпроси" title="" />
           </div>
 
           <!-- Дясна колона: данни за доставка + общо/потвърждение вървят заедно
@@ -427,6 +431,12 @@ import DeliveryDatePicker from "../components/DeliveryDatePicker.astro";
     margin: 0 0 20px;
     color: var(--color-text-soft);
     font-family: var(--font-sans);
+  }
+
+  /* FAQ се показва само когато има продукти в количката */
+  .cart-review:has(.cart-loading) .faq,
+  .cart-review:has(.cart-empty) .faq {
+    display: none;
   }
 
   /* Each cart item reads like its own little recipe card */

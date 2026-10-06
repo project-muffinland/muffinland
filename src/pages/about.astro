@@ -1,0 +1,336 @@
+---
+// src/pages/about.astro
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const icons: Record<string, string> = {
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+  leaf: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>`,
+  whisk: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/></svg>`,
+  gift: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>`,
+};
+
+const values = [
+  {
+    icon: "whisk",
+    title: "Малки партиди",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+  {
+    icon: "leaf",
+    title: "Прости съставки",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+  {
+    icon: "heart",
+    title: "Ръчна изработка",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+  {
+    icon: "gift",
+    title: "За всеки повод",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+];
+
+const steps = [
+  {
+    title: "Избираш",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+  {
+    title: "Печем",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+  {
+    title: "Доставяме",
+    copy: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor",
+  },
+];
+---
+
+<BaseLayout
+  title="За нас — Muffinland"
+  description="Научи повече за Muffinland - малка мъфинерия, която пече ръчно, на малки партиди и с качествени съставки."
+>
+  <!-- HERO -->
+  <section class="about-hero">
+    <div class="wrap about-hero__grid">
+      <div class="about-hero__copy">
+        <span class="eyebrow">За нас</span>
+        <h1>Малка мъфинерия,<br /><em>голям</em> вкус.</h1>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu
+          tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales
+          facilisis ac quis eros. Nam semper arcu in nibh.
+        </p>
+        <div class="about-hero__actions">
+          <a href="/muffins" class="btn btn-solid">Виж мъфините</a>
+          <a href="/contact" class="btn btn-outline">Свържи се с нас</a>
+        </div>
+      </div>
+      <div class="about-hero__media">
+        <img
+          src="https://picsum.photos/seed/muffinkitchen/700/560"
+          alt="Мъфини, току-що извадени от фурната"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="about-story">
+    <div class="wrap about-story__grid">
+      <div class="about-story__media">
+        <img
+          src="https://picsum.photos/seed/muffinhands/600/640"
+          alt="Ръце, които украсяват мъфини"
+        />
+      </div>
+      <div class="about-story__copy">
+        <span class="eyebrow">Нашата история</span>
+        <h2>Всичко започна с един <em>Мъфин</em>.</h2>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu
+          tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales
+          facilisis ac quis eros. Nam semper arcu in nibh.
+        </p>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu
+          tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales
+          facilisis ac quis eros. Nam semper arcu in nibh.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section class="about-values">
+    <div class="wrap">
+      <div class="about-heading">
+        <span class="eyebrow">Как работим</span>
+        <h2>Какво е важно за нас</h2>
+      </div>
+      <div class="about-values__grid">
+        {
+          values.map((v) => (
+            <div class="value">
+              <span
+                class="value__icon"
+                aria-hidden="true"
+                set:html={icons[v.icon]}
+              />
+              <h3>{v.title}</h3>
+              <p>{v.copy}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="about-steps">
+    <div class="wrap">
+      <div class="about-heading">
+        <span class="eyebrow">От поръчката до вратата ти</span>
+        <h2>Как става</h2>
+      </div>
+      <ol class="steps">
+        {
+          steps.map((s, i) => (
+            <li class="step">
+              <span class="step__num">{i + 1}</span>
+              <h3>{s.title}</h3>
+              <p>{s.copy}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* HERO */
+  .about-hero {
+    padding-top: 64px;
+  }
+  .about-hero__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 48px;
+  }
+  .about-hero__copy h1 {
+    font-size: 3.2rem;
+    line-height: 1.1;
+    margin: 6px 0 22px;
+  }
+  .about-hero__copy h1 em,
+  .about-story__copy h2 em {
+    font-style: italic;
+    color: var(--color-pink);
+  }
+  .about-hero__copy p {
+    color: var(--color-text-soft);
+    max-width: 44ch;
+    margin-bottom: 30px;
+  }
+  .about-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .about-hero__media img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    aspect-ratio: 5 / 4;
+  }
+
+  /* STORY */
+  .about-story {
+    background: var(--color-bg-alt);
+  }
+  .about-story__grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .about-story__media img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    aspect-ratio: 15 / 16;
+  }
+  .about-story__copy h2 {
+    font-size: 2rem;
+    margin: 6px 0 20px;
+  }
+  .about-story__copy p {
+    color: var(--color-text-soft);
+    max-width: 52ch;
+    margin: 0 0 18px;
+  }
+
+  /* SHARED HEADING */
+  .about-heading {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  .about-heading h2 {
+    font-size: 2.1rem;
+  }
+
+  /* VALUES */
+  .about-values__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+  .value {
+    text-align: center;
+    padding: 0 8px;
+  }
+  .value__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--color-bg-alt);
+    color: var(--color-dark);
+  }
+  .value__icon :global(svg) {
+    width: 22px;
+    height: 22px;
+  }
+  .value h3 {
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+  }
+  .value p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text-soft);
+  }
+
+  /* STEPS */
+  .about-steps {
+    background: var(--color-bg-alt);
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .step {
+    background: #fffaf7;
+    border: 1.5px solid var(--color-border);
+    border-radius: 20px;
+    padding: 28px 26px;
+  }
+  .step__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--color-pink);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .step h3 {
+    font-size: 1.25rem;
+    margin-bottom: 8px;
+  }
+  .step p {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: 0.97rem;
+  }
+
+  @media (max-width: 900px) {
+    .about-hero {
+      padding-top: 40px;
+    }
+    .about-hero__grid,
+    .about-story__grid {
+      grid-template-columns: 1fr;
+    }
+    .about-hero__copy h1 {
+      font-size: 2.4rem;
+    }
+    .about-hero__actions .btn {
+      flex: 1 1 auto;
+    }
+    .about-values__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px 20px;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .about-hero__copy h1 {
+      font-size: 1.9rem;
+    }
+    .about-heading h2 {
+      font-size: 1.6rem;
+    }
+    .about-values__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,244 @@
+---
+/**
+ * FAQ.astro — accordion FAQ for Muffin Social
+ * Uses only the tokens from global.css, so it inherits the site's look.
+ *
+ * Usage:
+ *   import FAQ from "../components/FAQ.astro";
+ *   <FAQ />
+ *   <FAQ alt />                       // cream-alt background (alternating sections)
+ *   <FAQ single={false} />            // allow several items open at once
+ *   <FAQ items={[{ q: "...", a: "..." }]} />   // custom questions
+ *   <FAQ compact eyebrow="" title="..." />     // slim version for inside cards/columns (used in cart)
+ */
+
+interface FaqItem {
+  q: string;
+  a: string; // may contain simple HTML (<strong>, <br>, <a>)
+}
+
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  items?: FaqItem[];
+  alt?: boolean;
+  single?: boolean;
+  compact?: boolean; // slim, left-aligned, no section padding / .wrap
+}
+
+const {
+  eyebrow = "Често задавани въпроси",
+  title = "Нужна ти е повече информация?",
+  alt = false,
+  single = true,
+  compact = false,
+  items = [
+    {
+      q: "Доставка",
+      a: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales facilisis ac quis eros. Nam semper arcu in nibh.",
+    },
+    {
+      q: "Начин на плащане",
+      a: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales facilisis ac quis eros. Nam semper arcu in nibh.",
+    },
+    {
+      q: "Време за изработка",
+      a: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum eu tempus tortor, ac commodo justo. Cras porttitor purus at urna sodales facilisis ac quis eros. Nam semper arcu in nibh.",
+    },
+  ],
+} = Astro.props;
+
+// Same "name" on every <details> makes the browser close the others
+// automatically (exclusive accordion). Unique per component instance.
+// compact = lives inside another layout (e.g. the cart column), so it must not
+// bring its own <section> padding or .wrap container
+const Tag = compact ? "div" : "section";
+const groupName = single ? `faq-${Math.random().toString(36).slice(2, 8)}` : undefined;
+---
+
+<Tag class:list={["faq", { "faq--alt": alt, "faq--compact": compact }]}>
+  <div class={compact ? "faq__inner" : "wrap"}>
+    <header class="faq__head">
+      {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+      {title && <h2>{title}</h2>}
+    </header>
+
+    <div class="faq__list">
+      {
+        items.map((item) => (
+          <details class="faq__item" name={groupName}>
+            <summary>
+              <span class="faq__q">{item.q}</span>
+              <span class="faq__icon" aria-hidden="true" />
+            </summary>
+            <div class="faq__a" set:html={item.a} />
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</Tag>
+
+<style>
+  .faq {
+    background: var(--color-bg);
+  }
+  .faq--alt {
+    background: var(--color-bg-alt);
+  }
+
+  .faq__head {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+  .faq__head h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.2;
+  }
+
+  .faq__list {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ---- Item card ---- */
+  .faq__item {
+    background: #fffaf7;
+    border: 1.5px solid var(--color-border);
+    border-radius: 20px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    interpolate-size: allow-keywords; /* lets height animate to "auto" */
+  }
+  .faq__item:hover {
+    border-color: var(--color-pink-light);
+  }
+  .faq__item[open] {
+    border-color: var(--color-pink);
+    box-shadow: 0 10px 28px -16px rgba(232, 115, 125, 0.45);
+  }
+
+  /* ---- Clickable row ---- */
+  summary {
+    list-style: none; /* hide default triangle (Firefox/Chrome) */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 26px;
+    cursor: pointer;
+    border-radius: 20px;
+  }
+  summary::-webkit-details-marker {
+    display: none; /* hide default triangle (Safari) */
+  }
+  summary:focus-visible {
+    outline: 2px solid var(--color-pink);
+    outline-offset: 2px;
+  }
+
+  .faq__q {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--color-dark);
+  }
+
+  /* ---- Plus / minus icon, drawn with two bars ---- */
+  .faq__icon {
+    position: relative;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-pink-light);
+    transition: background 0.2s ease, transform 0.3s ease;
+  }
+  .faq__icon::before,
+  .faq__icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 2px;
+    background: var(--color-pink-dark);
+    border-radius: 2px;
+    transform: translate(-50%, -50%);
+    transition: transform 0.3s ease, background 0.2s ease;
+  }
+  /* second bar is vertical -> together they form a "+" */
+  .faq__icon::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .faq__item[open] .faq__icon {
+    background: var(--color-pink);
+  }
+  .faq__item[open] .faq__icon::before,
+  .faq__item[open] .faq__icon::after {
+    background: #fff;
+  }
+  /* rotating the vertical bar to horizontal collapses "+" into "−" */
+  .faq__item[open] .faq__icon::after {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  /* ---- Answer ---- */
+  .faq__a {
+    padding: 0 26px 24px;
+    color: var(--color-text-soft);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .faq__a :global(strong) {
+    color: var(--color-dark);
+  }
+  .faq__a :global(a) {
+    color: var(--color-pink-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Smooth open/close in modern browsers; others just snap (still works) */
+  .faq__item::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: block-size 0.3s ease, content-visibility 0.3s allow-discrete;
+  }
+  .faq__item[open]::details-content {
+    block-size: auto;
+  }
+
+  @media (max-width: 900px) {
+    .faq__head {
+      margin-bottom: 32px;
+    }
+    summary {
+      padding: 16px 18px;
+    }
+    .faq__q {
+      font-size: 1.05rem;
+    }
+    .faq__a {
+      padding: 0 18px 20px;
+    }
+  }
+
+  /* ---- Compact variant (cart) ----
+     :global() on the root class is on purpose: the root is a dynamic tag
+     (<Tag>), so Astro's scoping attribute is not guaranteed on it and a
+     plain ".faq--compact .faq__head" selector would silently never match. */
+  :global(.faq--compact) {
+    margin-top: 32px;
+  }
+  :global(.faq--compact) .faq__head {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  :global(.faq--compact) .faq__head .eyebrow {
+    margin-bottom: 0;
+  }
+</style>
