@@ -13,6 +13,7 @@ import FAQ from "../components/FAQ.astro";
         <div class="success-icon">✓</div>
         <h1>Благодаря за вашата поръчка!</h1>
         <p>Ще се свържем с вас скоро за потвърждение.</p>
+        <p>Повече информация за начините на плащане ще намерите в имейла, който ви изпратихме.</p>
         <a href="/" class="btn btn-solid">Върнете се назад</a>
       </div>
 
@@ -347,11 +348,7 @@ import FAQ from "../components/FAQ.astro";
         return;
       }
 
-      // 3) Email notification (Web3Forms). The order is already saved,
-      //    so a failure here must not fail the checkout.
-      try {
-        await fetch("https://api.web3forms.com/submit", { method: "POST", body: new FormData(form) });
-      } catch {}
+      // 3) Emails (owner + customer) are now sent by /api/create-order via Resend.
 
       localStorage.removeItem("muffinCart");
       window.dispatchEvent(new Event("cart-updated"));

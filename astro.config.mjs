@@ -16,6 +16,9 @@ export default defineConfig({
       SANITY_PROJECT_ID: envField.string({ context: 'server', access: 'public', default: 'jfsf87io' }),
       SANITY_DATASET: envField.string({ context: 'server', access: 'public', default: 'production' }),
       SANITY_WRITE_TOKEN: envField.string({ context: 'server', access: 'secret' }),
+      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      EMAIL_FROM: envField.string({ context: 'server', access: 'public', optional: true }),
+      OWNER_EMAIL: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
   integrations: [

@@ -5,6 +5,7 @@ export default defineType({
   title: 'Order',
   type: 'document',
   fields: [
+    defineField({name: 'orderNumber', title: 'Order number', type: 'string', readOnly: true}),
     defineField({name: 'customerName', title: 'Customer name', type: 'string', validation: (r) => r.required()}),
     defineField({name: 'address', title: 'Delivery address', type: 'string', validation: (r) => r.required()}),
     defineField({name: 'phone', title: 'Phone', type: 'string', validation: (r) => r.required()}),
@@ -60,9 +61,9 @@ export default defineType({
     {title: 'Delivery date', name: 'deliveryDateAsc', by: [{field: 'deliveryDate', direction: 'asc'}]},
   ],
   preview: {
-    select: {name: 'customerName', date: 'deliveryDate', total: 'totalPrice', status: 'status'},
-    prepare: ({name, date, total, status}) => ({
-      title: `${name ?? 'Order'} — €${Number(total ?? 0).toFixed(2)}`,
+    select: {number: 'orderNumber', name: 'customerName', date: 'deliveryDate', total: 'totalPrice', status: 'status'},
+    prepare: ({number, name, date, total, status}) => ({
+      title: `${number ? number + ' · ' : ''}${name ?? 'Order'} — €${Number(total ?? 0).toFixed(2)}`,
       subtitle: `${status ?? 'pending'} · delivery ${date ?? '?'}`,
     }),
   },

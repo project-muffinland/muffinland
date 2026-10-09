@@ -8,7 +8,18 @@ import {
   EMAIL_ERROR,
 } from '../../lib/validation'
 
+import {sendOrderEmails} from '../../lib/email'
+
 export const prerender = false
+
+// Atomic counter stored in Sanity: patch().inc() is applied server-side,
+// so two simultaneous orders can never get the same number.
+// First order = ML-1001 (change the 1000 below to start elsewhere).
+async function nextOrderNumber(client: any): Promise<string> {
+  await client.createIfNotExists({_id: 'orderCounter', _type: 'orderCounter', value: 1000})
+  const res = await client.patch('orderCounter').inc({value: 1}).commit()
+  return `ML-${res.value}`
+}
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null)
@@ -251,9 +262,18 @@ export const POST: APIRoute = async ({request, locals}) => {
     return json({ok: false, error: 'Цените са променени. Моля презаредете количката.'}, 409)
   }
 
+  let orderNumber: string
+  try {
+    orderNumber = await nextOrderNumber(client)
+  } catch (err) {
+    console.error('create-order: order number failed', err)
+    return json({ok: false, error: 'Неуспешен запис на поръчката.'}, 500)
+  }
+
   try {
     const doc = await client.create({
       _type: 'order',
+      orderNumber,
       customerName,
       address,
       phone: toInternationalPhone(phone),
@@ -265,7 +285,19 @@ export const POST: APIRoute = async ({request, locals}) => {
       status: 'pending',
       createdAt: new Date().toISOString(),
     })
-    return json({ok: true, orderId: doc._id})
+    // Order is saved. Emails never throw, so they can't fail the checkout.
+    await sendOrderEmails(locals, {
+      orderNumber,
+      customerName,
+      address,
+      phone: toInternationalPhone(phone),
+      email,
+      notes,
+      deliveryDate,
+      totalPrice,
+      items: items as any,
+    })
+    return json({ok: true, orderId: doc._id, orderNumber})
   } catch (err) {
     console.error('create-order failed', err)
     return json({ok: false, error: 'Неуспешен запис на поръчката.'}, 500)
