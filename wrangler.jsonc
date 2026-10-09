@@ -15,6 +15,8 @@
 	},
 	"vars": {
 		"SANITY_PROJECT_ID": "jfsf87io",
-		"SANITY_DATASET": "production"
+		"SANITY_DATASET": "production",
+		"EMAIL_FROM": "sales@muffinland.bg",
+		"OWNER_EMAIL": "muffinland.admin@gmail.com",
 	}
 }

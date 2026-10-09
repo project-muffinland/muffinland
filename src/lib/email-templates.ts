@@ -99,7 +99,7 @@ export function clientEmail(o: OrderEmailData) {
     <h3 style="margin:24px 0 8px;font-size:16px;">Начини на плащане</h3>
     <p style="margin:0;font-size:15px;line-height:1.5;">
       <!-- TODO: replace with the real payment info -->
-      Информация за начините на плащане ще добавим тук.
+      Информация за начините на плащане може да намерите тук.
     </p>
 
     <p style="margin:28px 0 0;color:#777;font-size:13px;">Муфинландия</p>`,
